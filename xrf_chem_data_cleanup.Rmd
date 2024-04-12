@@ -1,0 +1,63 @@
+---
+title: "Template for XRF Chemistry data Parsing"
+output: html_notebook
+---
+
+# Over view
+
+This is a data base for XRF chemstry Data set.
+
+# Data sets
+
+## Elements
+
+```{r}
+elements <-
+  c("Al", "Si", "S", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "As", "Ag", "Sn", "Sb", "Au", "Pb", "Bi")
+```
+
+
+## Data set
+
+```{r}
+library(tidyverse)
+library(magrittr)
+library(readr)
+
+data_set <- read_csv("el-ahwat_chem.csv")
+
+```
+
+
+## Celaning data data
+
+```{r}
+data_set_clean <- 
+  data_set %>% select(!contains("Error")) %>%  # Removes the Errores
+  select(Lab_ID, starts_with(elements)) %>% # Removes all Other elements
+  select(!`Collimation Status`)
+```
+
+## Createding List of Mean and Standard Diviation
+
+```{r}
+data_overview <- 
+  data_set_clean %>%
+  group_by(Lab_ID) %>% 
+  summarise(across(everything(), list(mean = mean, sd = sd)))
+```
+
+## Isolating Items which conatina high Standar Diviation
+
+```{r}
+
+high_sd <- 
+  function(x){
+  x >= 3
+  }
+
+data_isolated <-
+  data_overview %>% 
+  filter(if_any(ends_with("sd"), high_sd))
+```
+
