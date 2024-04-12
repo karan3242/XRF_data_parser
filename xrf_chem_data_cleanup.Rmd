@@ -11,15 +11,16 @@ This is a data base for XRF chemstry Data set.
 
 ## Elements
 
-```{r}
+```{r include=FALSE}
 elements <-
-  c("Al", "Si", "S", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "As", "Ag", "Sn", "Sb", "Au", "Pb", "Bi")
+  c("Al", "Si", "S", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "As", "Ag", "Sn", "Sb", "Au", "Pb", "Bi")i
 ```
 
+`r elements`
 
 ## Data set
 
-```{r}
+```{r include=FALSE}
 library(tidyverse)
 library(magrittr)
 library(readr)
@@ -27,6 +28,7 @@ library(readr)
 data_set <- read_csv("el-ahwat_chem.csv")
 
 ```
+`r data_set`
 
 
 ## Celaning data data
@@ -36,6 +38,8 @@ data_set_clean <-
   data_set %>% select(!contains("Error")) %>%  # Removes the Errores
   select(Lab_ID, starts_with(elements)) %>% # Removes all Other elements
   select(!`Collimation Status`)
+
+data_set_clean
 ```
 
 ## Createding List of Mean and Standard Diviation
@@ -45,6 +49,8 @@ data_overview <-
   data_set_clean %>%
   group_by(Lab_ID) %>% 
   summarise(across(everything(), list(mean = mean, sd = sd)))
+
+data_overview
 ```
 
 ## Isolating Items which conatina high Standar Diviation
@@ -59,5 +65,7 @@ high_sd <-
 data_isolated <-
   data_overview %>% 
   filter(if_any(ends_with("sd"), high_sd))
+
+data_isolated
 ```
 
