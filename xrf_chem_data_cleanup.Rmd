@@ -5,7 +5,7 @@ output: html_notebook
 
 # Over view
 
-This is a data base for XRF chemstry Data set.
+This is a data base for XRF chemistry Data set.
 
 # Data sets
 
@@ -13,7 +13,7 @@ This is a data base for XRF chemstry Data set.
 
 ```{r include=FALSE}
 elements <-
-  c("Al", "Si", "S", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "As", "Ag", "Sn", "Sb", "Au", "Pb", "Bi")i
+  c("Al", "Si", "S", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "As", "Ag", "Sn", "Sb", "Au", "Pb", "Bi")
 ```
 
 `r elements`
@@ -30,10 +30,9 @@ data_set <- read_csv("el-ahwat_chem.csv")
 ```
 `r data_set`
 
+## Clean Data set
 
-## Celaning data data
-
-```{r}
+```{r Cleaning data, echo=FALSE}
 data_set_clean <- 
   data_set %>% select(!contains("Error")) %>%  # Removes the Errores
   select(Lab_ID, starts_with(elements)) %>% # Removes all Other elements
@@ -42,9 +41,9 @@ data_set_clean <-
 data_set_clean
 ```
 
-## Createding List of Mean and Standard Diviation
+## List of Mean and Standard Diviation
 
-```{r}
+```{r echo=FALSE}
 data_overview <- 
   data_set_clean %>%
   group_by(Lab_ID) %>% 
@@ -53,10 +52,9 @@ data_overview <-
 data_overview
 ```
 
-## Isolating Items which conatina high Standar Diviation
+# Isolated Items which conatin a high Standar Diviation
 
-```{r}
-
+```{r echo=FALSE}
 high_sd <- 
   function(x){
   x >= 3
@@ -64,8 +62,35 @@ high_sd <-
 
 data_isolated <-
   data_overview %>% 
-  filter(if_any(ends_with("sd"), high_sd))
+  filter(if_any(ends_with("sd"), high_sd)) %>% 
+  select(Lab_ID, ends_with("sd")) %>% 
+  select_if(~ any(high_sd(.)))
 
 data_isolated
 ```
 
+Items which are Isolated `r data_isolated$Lab_ID %>% as.array()`
+
+## Data set of Isloated Items
+
+```{r echo=FALSE}
+
+outliers <- function(x){
+  abs((x-mean(x))/sd(x) > 1)
+}
+
+columns <-
+  substr(colnames(data_isolated[2:(max(col(data_isolated)))]),
+         start = 1,
+         stop = 2)
+
+data_set_isolated <- data_set_clean %>% 
+  filter(Lab_ID %in% (data_isolated$Lab_ID %>% as.array())) %>% 
+  arrange(Lab_ID) %>% 
+  group_by(Lab_ID) %>% 
+  select(Lab_ID, starts_with(columns)) # %>% 
+  #select_if(~ any(. > 4))
+  #filter(if_any(ends_with("Concentration"), outliers))
+
+data_set_isolated
+```
