@@ -25,7 +25,7 @@ library(tidyverse)
 library(magrittr)
 library(readr)
 
-data_set <- read_csv("el-ahwat_chem.csv")
+data_set <- read_csv("data.csv")
 
 ```
 `r data_set`
