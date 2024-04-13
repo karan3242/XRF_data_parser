@@ -75,9 +75,9 @@ Items which are Isolated `r data_isolated$Lab_ID %>% as.array()`
 
 ```{r echo=FALSE}
 
-outliers <- function(x){
-  abs((x-mean(x))/sd(x) > 1)
-}
+# outliers <- function(x){
+#   abs((x-mean(x))/sd(x) > 1)
+# }
 
 columns <-
   substr(colnames(data_isolated[2:(max(col(data_isolated)))]),
