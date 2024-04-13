@@ -112,7 +112,7 @@ ui <- fluidPage(navbarPage(
         "Devation",
         min = 0,
         max = 3,
-        value = 0
+        value = 1
         )
       
     ),
