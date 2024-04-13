@@ -1,4 +1,4 @@
-d#
+#
 # This is a Shiny web application.
 # You can run the application by clicking
 # the 'Run App' button above.
@@ -7,6 +7,7 @@ d#
 #
 #    https://shiny.posit.co/
 #
+
 
 library(shiny)
 library(readr)
@@ -104,7 +105,16 @@ ui <- fluidPage(navbarPage(
         min = 0,
         max = 10,
         value = 3
-      )
+      ),
+      
+      sliderInput(
+        "z_score",
+        "Devation",
+        min = 0,
+        max = 3,
+        value = 0
+        )
+      
     ),
     mainPanel(
       tags$h3("High SD items - Summary"),
@@ -127,23 +137,31 @@ server <- function(input, output) {
     if (is.null(inFile))
       return(NULL)
     
-    read_csv(inFile$datapath)
+    read_csv(inFile$datapath) %>%
+      select(id = Lab_ID, everything()) %>%
+      select(!contains("Error")) %>%
+      select(!`Collimation Status`) 
+    
+    
   })
   
   # Clean data
   
   data_set_clean <- reactive({
+    
     data_set() %>%
-      select(!contains("Error")) %>%
-      select(!`Collimation Status`) %>%
-      select(Lab_ID, starts_with(input$elements)) # Removes all Other elements
+      select(id , starts_with(input$elements)) %>% 
+      select(id, sort(names(.)))
+    
+    
     
   })
+
   
   
   data_overview <- reactive({
     data_set_clean() %>%
-      group_by(Lab_ID) %>%
+      group_by(id) %>%
       summarise(across(everything(), list(mean = mean, sd = sd)))
   })
   
@@ -157,7 +175,7 @@ server <- function(input, output) {
     
     data_overview() %>%
       filter(if_any(ends_with("sd"), high_sd)) %>%
-      select(Lab_ID, ends_with("sd")) %>%
+      select(id, ends_with("sd")) %>%
       select_if( ~ any(high_sd(.)))
   })
   
@@ -168,10 +186,10 @@ server <- function(input, output) {
              stop = 2)
     
     data_overview() %>%
-      filter(Lab_ID %in% (high_sd()$Lab_ID %>% as.array())) %>%
-      arrange(Lab_ID) %>%
-      group_by(Lab_ID) %>%
-      select(Lab_ID, starts_with(columns))
+      filter(id %in% (high_sd()$id %>% as.array())) %>%
+      arrange(id) %>%
+      group_by(id) %>%
+      select(id, starts_with(columns))
   })
   
   high_sd_data <- reactive({
@@ -180,11 +198,19 @@ server <- function(input, output) {
              start = 1,
              stop = 2)
     
+    outliers <- function(x) {
+      x > input$z_score | x < (input$z_score*(-1))
+    }
+    
     data_set_clean() %>%
-      filter(Lab_ID %in% (high_sd()$Lab_ID %>% as.array())) %>%
-      arrange(Lab_ID) %>%
-      group_by(Lab_ID) %>%
-      select(Lab_ID, starts_with(columns))
+      filter(id %in% (high_sd()$id %>% as.array())) %>%
+      arrange(id) %>%
+      group_by(id) %>%
+      select(id, starts_with(columns)) %>% 
+      mutate(across(everything(), list(z_score = scale))) %>%
+      select(id, sort(names(.))) %>% 
+      filter(if_any(ends_with("z_score"), outliers))
+    
   })
   
   # Outputs

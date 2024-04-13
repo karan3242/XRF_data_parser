@@ -34,9 +34,12 @@ data_set <- read_csv("data.csv")
 
 ```{r Cleaning data, echo=FALSE}
 data_set_clean <- 
-  data_set %>% select(!contains("Error")) %>%  # Removes the Errores
-  select(Lab_ID, starts_with(elements)) %>% # Removes all Other elements
-  select(!`Collimation Status`)
+  data_set %>% select(!contains("Error")) %>%  # Removes the Errors
+  select(id = Lab_ID, starts_with(elements)) %>% # Removes all Other elements
+  select(!`Collimation Status`) %>% 
+  select(id, sort(names(.)))
+
+names(data_set_clean) <-substr(names(data_set_clean), 1,2)
 
 data_set_clean
 ```
@@ -46,7 +49,7 @@ data_set_clean
 ```{r echo=FALSE}
 data_overview <- 
   data_set_clean %>%
-  group_by(Lab_ID) %>% 
+  group_by(id) %>% 
   summarise(across(everything(), list(mean = mean, sd = sd)))
 
 data_overview
@@ -63,21 +66,17 @@ high_sd <-
 data_isolated <-
   data_overview %>% 
   filter(if_any(ends_with("sd"), high_sd)) %>% 
-  select(Lab_ID, ends_with("sd")) %>% 
+  select(id, ends_with("sd")) %>% 
   select_if(~ any(high_sd(.)))
 
 data_isolated
 ```
 
-Items which are Isolated `r data_isolated$Lab_ID %>% as.array()`
+Items which are Isolated `r data_isolated$id %>% as.array()`
 
 ## Data set of Isloated Items
 
 ```{r echo=FALSE}
-
-# outliers <- function(x){
-#   abs((x-mean(x))/sd(x) > 1)
-# }
 
 columns <-
   substr(colnames(data_isolated[2:(max(col(data_isolated)))]),
@@ -85,10 +84,12 @@ columns <-
          stop = 2)
 
 data_set_isolated <- data_set_clean %>% 
-  filter(Lab_ID %in% (data_isolated$Lab_ID %>% as.array())) %>% 
-  arrange(Lab_ID) %>% 
-  group_by(Lab_ID) %>% 
-  select(Lab_ID, starts_with(columns)) # %>% 
+  filter(id %in% (data_isolated$id %>% as.array())) %>% 
+  arrange(id) %>% 
+  group_by(id) %>% 
+  select(id, starts_with(columns)) %>% 
+  mutate(across(everything(), list(z_score = scale))) %>% 
+  select(id, sort(names(.)))# %>% 
   #select_if(~ any(. > 4))
   #filter(if_any(ends_with("Concentration"), outliers))
 
