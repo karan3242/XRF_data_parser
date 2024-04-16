@@ -24,6 +24,7 @@ elements <-
 library(tidyverse)
 library(magrittr)
 library(readr)
+library(janitor)
 
 data_set <- read_csv("data.csv")
 
@@ -39,10 +40,9 @@ data_set_clean <-
   select(!`Collimation Status`) %>% 
   select(id, sort(names(.)))
 
-names(data_set_clean) <-substr(names(data_set_clean), 1,2)
-
 data_set_clean
 ```
+
 
 ## List of Mean and Standard Diviation
 
