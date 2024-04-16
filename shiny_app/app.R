@@ -11,6 +11,8 @@
 library(shiny)
 library(readr)
 library(tidyverse)
+library(viridis)
+library(plotly)
 
 
 ui <- fluidPage(navbarPage(
@@ -135,6 +137,12 @@ ui <- fluidPage(navbarPage(
       tableOutput("high_sd_data")
     )
     
+  ),
+  tabPanel(
+    "Plot",
+    mainPanel(
+      plotOutput("plot")
+    )
   )
   
 ))
@@ -269,6 +277,40 @@ server <- function(input, output) {
     
   })
   
+  data_plot <- reactive({
+    data_mean <-
+      data_overview_norm() %>% pivot_longer(cols = (contains("mean")),
+                                     names_to = "Type",
+                                     values_to = "Value_mean") %>%  select(id, Type, Value_mean)
+    
+    data_sd <-
+      data_overview_norm() %>% pivot_longer(cols = (contains("sd")),
+                                     names_to = "Type",
+                                     values_to = "Value_sd") %>% select(id, Type, Value_sd)
+    
+    data_mean$Type <- data_mean$Type %>% substr(1, 2)
+    data_sd$Type <- data_sd$Type %>% substr(1, 2)
+    
+    data_join <-
+      full_join(data_mean, data_sd, by = join_by(id, Type))
+    
+    ggplot(data_join) +
+      geom_bar(aes(x = id, y = Value_mean, fill = Type),
+               stat = "identity",
+               position = "identity") +
+      geom_errorbar(
+        aes(
+          x = id,
+          ymin = Value_mean - Value_sd,
+          ymax = Value_mean + Value_sd,
+          fill = Type
+        ),
+        position = "identity"
+      ) +
+      scale_fill_viridis(discrete = TRUE, name = "")+
+      theme_classic()
+  })
+
   # Outputs
   
   output$data_set <- renderTable({
@@ -309,6 +351,10 @@ server <- function(input, output) {
   })
   output$data_minmax_highsd <- renderTable({
     data_minmax_highsd()
+  })
+  
+  output$plot <- renderPlot({
+    data_plot()
   })
   
 }
