@@ -31,38 +31,38 @@ ui <- fluidPage(navbarPage(
         "elements",
         "Select Elements",
         choices = c(
-          "Mg",
+          "Ag",
           "Al",
-          "Si",
+          "As",
+          "Au",
+          "Bi",
+          "Cd",
+          "Co",
+          "Cr",
+          "Cu",
+          "Fe",
+          "Hf",
+          "Mg",
+          "Mn",
+          "Mo",
+          "Nb",
+          "Ni",
           "P",
+          "Pb",
+          "Pd",
+          "Re",
           "S",
+          "Sb",
           "Sc",
+          "Si",
+          "Sn",
+          "Sr",
+          "Ta",
           "Ti",
           "V",
-          "Cr",
-          "Mn",
-          "Fe",
-          "Co",
-          "Ni",
-          "Cu",
-          "Zn",
-          "As",
-          "Sr",
-          "Zr",
-          "Nb",
-          "Mo",
-          "Pd",
-          "Ag",
-          "Cd",
-          "Sn",
-          "Sb",
-          "Hf",
-          "Ta",
           "W",
-          "Re",
-          "Au",
-          "Pb",
-          "Bi"
+          "Zn",
+          "Zr"
         ) ,
         inline = TRUE,
         selected = c(
@@ -140,7 +140,8 @@ server <- function(input, output) {
     read_csv(inFile$datapath) %>%
       select(id = Lab_ID, everything()) %>%
       select(!contains("Error")) %>%
-      select(!`Collimation Status`) 
+      select(!`Collimation Status`) %>% 
+      arrange(id)
     
     
   })
