@@ -72,22 +72,38 @@ ui <- fluidPage(navbarPage(
         ) ,
         inline = TRUE,
         selected = c(
-          #"Al",
-          #"Si",
-          #"S",
-          #"Mn",
-          "Fe",
-          "Co",
-          "Ni",
-          "Cu",
-          "Zn",
-          "As",
           "Ag",
-          "Sn",
-          "Sb",
+          "Al",
+          "As",
           "Au",
+          "Bi",
+          "Cd",
+          "Co",
+          "Cr",
+          "Cu",
+          "Fe",
+          "Hf",
+          "Mg",
+          "Mn",
+          "Mo",
+          "Nb",
+          "Ni",
+          "P",
           "Pb",
-          "Bi"
+          "Pd",
+          "Re",
+          "S",
+          "Sb",
+          "Sc",
+          "Si",
+          "Sn",
+          "Sr",
+          "Ta",
+          "Ti",
+          "V",
+          "W",
+          "Zn",
+          "Zr"
         )
       ),
       tags$h3("Selected Elements"),
@@ -187,6 +203,7 @@ server <- function(input, output) {
       select(!contains("Error")) %>%
       select(!`Collimation Status`) %>%
       select(id , starts_with(input$elements)) %>%
+      select(id, contains("Concentration")) %>% 
       select(id, sort(names(.))) %>% 
       filter(id %in% input$lab_id)
   })
