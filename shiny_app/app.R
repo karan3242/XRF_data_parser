@@ -12,7 +12,7 @@ library(shiny)
 library(readr)
 library(tidyverse)
 library(viridis)
-
+library(plotly)
 
 ui <- fluidPage(navbarPage(
   "XRF data Parsing",
@@ -92,18 +92,20 @@ ui <- fluidPage(navbarPage(
       ),
       tags$h3("Selected Elements"),
       tableOutput("data_clean"),
-      
       tags$h3("Summary"),
-      tableOutput("data_overview")
+      tableOutput("data_overview"),
+      tags$h3("Range"),
+      tableOutput("data_summary_minmax")
     )
   ),
   tabPanel(
     "Normalized Data",
     mainPanel(
-      tags$h3("Normalized Data"),
+      tags$h3("Normalized Data of Selected Elements"),
       tableOutput("data_normal"),
       tags$h3("Summary"),
       tableOutput("data_overview_norm"),
+      tags$h3("Range"),
       tableOutput("data_overview_minmax")
     )
   ),
@@ -120,7 +122,7 @@ ui <- fluidPage(navbarPage(
       
       sliderInput(
         "z_score",
-        "Devation",
+        "Devation steps",
         min = 0,
         max = 3,
         value = 1
@@ -141,7 +143,8 @@ ui <- fluidPage(navbarPage(
   tabPanel(
     "Plot",
     mainPanel(
-      plotOutput("plot", width = "100%", height = "100%")
+      plotlyOutput("plot", height = "500px")
+
     )
   )
   
@@ -154,10 +157,13 @@ server <- function(input, output) {
   data_set <- reactive({
     inFile <- input$file1
     
-    read_csv(inFile$datapath) %>%
+    data <- read_csv(inFile$datapath) %>%
       select(id = Lab_ID, everything()) %>%
       arrange(id)
     
+    data$id <- data$id %>% as.character()
+    
+    data
     
   })
   # Clean data
@@ -215,6 +221,12 @@ server <- function(input, output) {
     data_set_clean() %>%
       group_by(id) %>%
       summarise(across(everything(), list(mean = mean, sd = sd)))
+  })
+  
+  data_summary_minmax <-reactive({
+    data_set_clean() %>%
+      group_by(id) %>%
+      summarise(across(everything(), list(min = min, max = max)))
   })
   
   data_overview_norm <- reactive({
@@ -308,7 +320,7 @@ server <- function(input, output) {
     data_join <-
       full_join(data_mean, data_sd, by = join_by(id, Type))
     
-    ggplot(data_join) +
+   p <- ggplot(data_join) +
       geom_bar(aes(x = id, y = Value_mean, fill = Type),
                stat = "identity",
                position = "dodge") +
@@ -319,10 +331,18 @@ server <- function(input, output) {
           ymax = Value_mean + Value_sd,
           fill = Type
         ),
-        position = "dodge"
+        position = "dodge",
+        colour="red", 
+        alpha=0.9, 
+        size=0.8
       ) +
       scale_fill_viridis(discrete = TRUE, name = "")+
-      theme_classic()
+      theme_classic()+
+      xlab("Items.")+
+      ylab("Percentage.")
+   
+   ggplotly(p)
+   
   })
 
   # Outputs
@@ -364,13 +384,16 @@ server <- function(input, output) {
   output$data_overview_minmax <- renderTable({
     data_overview_minmax()
   })
+  output$data_summary_minmax <- renderTable({
+    data_summary_minmax()
+  })
   output$data_minmax_highsd <- renderTable({
     data_minmax_highsd()
   })
   
-  output$plot <- renderPlot({
+  output$plot <- renderPlotly({
     data_plot()
-  }, width = 1500, height = 750)
+  })
   
 }
 
