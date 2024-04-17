@@ -12,8 +12,6 @@ library(shiny)
 library(readr)
 library(tidyverse)
 library(viridis)
-library(plotly)
-
 
 ui <- fluidPage(navbarPage(
   "XRF data Parsing",
@@ -141,7 +139,7 @@ ui <- fluidPage(navbarPage(
   tabPanel(
     "Plot",
     mainPanel(
-      plotOutput("plot")
+      plotOutput("plot", width = "100%")
     )
   )
   
@@ -297,7 +295,7 @@ server <- function(input, output) {
     ggplot(data_join) +
       geom_bar(aes(x = id, y = Value_mean, fill = Type),
                stat = "identity",
-               position = "identity") +
+               position = "dodge") +
       geom_errorbar(
         aes(
           x = id,
@@ -305,10 +303,12 @@ server <- function(input, output) {
           ymax = Value_mean + Value_sd,
           fill = Type
         ),
-        position = "identity"
+        position = "dodge"
       ) +
       scale_fill_viridis(discrete = TRUE, name = "")+
-      theme_classic()
+      theme_classic()+
+      xlab("Items.")+
+      ylab("Percentage.")
   })
 
   # Outputs
@@ -355,7 +355,7 @@ server <- function(input, output) {
   
   output$plot <- renderPlot({
     data_plot()
-  })
+  }, width = 1500, height = 750)
   
 }
 
