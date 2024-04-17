@@ -12,7 +12,6 @@ library(shiny)
 library(readr)
 library(tidyverse)
 library(viridis)
-library(plotly)
 
 
 ui <- fluidPage(navbarPage(
@@ -33,6 +32,7 @@ ui <- fluidPage(navbarPage(
   tabPanel(
     "Data Overview",
     mainPanel(
+      uiOutput("lab_items"),
       checkboxGroupInput(
         "elements",
         "Select Elements",
@@ -141,7 +141,7 @@ ui <- fluidPage(navbarPage(
   tabPanel(
     "Plot",
     mainPanel(
-      plotOutput("plot")
+      plotOutput("plot", width = "100%", height = "100%")
     )
   )
   
@@ -156,19 +156,33 @@ server <- function(input, output) {
     
     read_csv(inFile$datapath) %>%
       select(id = Lab_ID, everything()) %>%
-      select(!contains("Error")) %>%
-      select(!`Collimation Status`) %>%
       arrange(id)
     
     
   })
-  
   # Clean data
   
+  # Lab items out put
+  output$lab_items <- renderUI({
+    req(data_set())
+    print(unique(data_set()$id))
+    checkboxGroupInput(
+      "lab_id",
+      "Select Lab Items",
+      choices = unique(data_set()$id), 
+      inline = TRUE, 
+      selected = unique(data_set()$id)
+    )
+  })
+  
   data_set_clean <- reactive({
+    req(input$lab_id, data_set())
     data_set() %>%
+      select(!contains("Error")) %>%
+      select(!`Collimation Status`) %>%
       select(id , starts_with(input$elements)) %>%
-      select(id, sort(names(.)))
+      select(id, sort(names(.))) %>% 
+      filter(id %in% input$lab_id)
   })
   
   # Normal data
@@ -297,7 +311,7 @@ server <- function(input, output) {
     ggplot(data_join) +
       geom_bar(aes(x = id, y = Value_mean, fill = Type),
                stat = "identity",
-               position = "identity") +
+               position = "dodge") +
       geom_errorbar(
         aes(
           x = id,
@@ -305,7 +319,7 @@ server <- function(input, output) {
           ymax = Value_mean + Value_sd,
           fill = Type
         ),
-        position = "identity"
+        position = "dodge"
       ) +
       scale_fill_viridis(discrete = TRUE, name = "")+
       theme_classic()
@@ -320,6 +334,7 @@ server <- function(input, output) {
   output$data_clean <- renderTable({
     data_set_clean()
   })
+  
   
   output$data_normal <- renderTable({
     data_set_normal()
@@ -355,7 +370,7 @@ server <- function(input, output) {
   
   output$plot <- renderPlot({
     data_plot()
-  })
+  }, width = 1500, height = 750)
   
 }
 
