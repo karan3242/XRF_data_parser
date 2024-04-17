@@ -3,3 +3,18 @@ title: "XRF data Parsing"
 output: html_notebook
 ---
 
+This is a XRF parsing tool designed for parsing Chemistry data set out put from the OLYMPUS VANTA pXRF
+
+# Requirements
+
+- OLYMPUS VANTA pXRF.
+- GeoChem export method
+
+The export format of of the csv should be in the GeoChem format with Item notes set to `LAB_ID`.
+Note that the program can not read data with `<LOD` values outputted, and `<LOD` values need to be set to `0` before uploading the data file.
+
+# Features
+
+## Features to Add
+
+## Features Added
