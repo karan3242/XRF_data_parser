@@ -1,9 +1,4 @@
----
-title: "XRF data Parsing"
-output: html_notebook
----
-
-> XRF Data Parsing Tool for OLYMPUS VANTA pXRF Chemistry Datasets
+# XRF Data Parsing Tool for OLYMPUS VANTA pXRF Chemistry Datasets
 
 ![](https://www.portaspecs.com/wp-content/uploads/2019/05/sized_m-series_2_1024x1024.jpg)
 
