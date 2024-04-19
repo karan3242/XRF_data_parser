@@ -26,12 +26,14 @@ ui <- fluidPage(navbarPage(
                           "text/comma-separated-values,text/plain",
                           ".csv")
              ),
-             tags$h3("Main data"),
+             tags$h1("Main data"),
+             tags$body("<LOD values have been converted to 0"),
              tableOutput("data_set")
            )),
   tabPanel(
     "Data Overview",
     mainPanel(
+      tags$h1("Selected Elements"),
       uiOutput("lab_items"),
       checkboxGroupInput(
         "elements",
@@ -72,70 +74,85 @@ ui <- fluidPage(navbarPage(
         ) ,
         inline = TRUE,
         selected = c(
-          #"Al",
-          #"Si",
-          #"S",
-          #"Mn",
-          "Fe",
-          "Co",
-          "Ni",
-          "Cu",
-          "Zn",
-          "As",
           "Ag",
-          "Sn",
-          "Sb",
+          "Al",
+          "As",
           "Au",
+          "Bi",
+          "Cd",
+          "Co",
+          "Cr",
+          "Cu",
+          "Fe",
+          "Hf",
+          "Mg",
+          "Mn",
+          "Mo",
+          "Nb",
+          "Ni",
+          "P",
           "Pb",
-          "Bi"
+          "Pd",
+          "Re",
+          "S",
+          "Sb",
+          "Sc",
+          "Si",
+          "Sn",
+          "Sr",
+          "Ta",
+          "Ti",
+          "V",
+          "W",
+          "Zn",
+          "Zr"
         )
       ),
-      tags$h3("Selected Elements"),
       tableOutput("data_clean"),
-      tags$h3("Summary"),
+      tags$h2("Summary"),
       tableOutput("data_overview"),
-      tags$h3("Range"),
+      tags$h2("Range"),
       tableOutput("data_summary_minmax")
     )
   ),
   tabPanel(
     "Normalized Data",
     mainPanel(
-      tags$h3("Normalized Data of Selected Elements"),
+      tags$h1("Normalized Data of Selected Elements"),
       tableOutput("data_normal"),
-      tags$h3("Summary"),
+      tags$h2("Summary"),
       tableOutput("data_overview_norm"),
-      tags$h3("Range"),
+      tags$h2("Range"),
       tableOutput("data_overview_minmax")
     )
   ),
   tabPanel(
-    "Data with High Standard Diviation",
-    sidebarPanel(
+    "High SD Readings",
+    mainPanel(
+      tags$h1("High SD items - Summary"),
       sliderInput(
         "cutoff",
         "Deviation Percentage cutoff",
         min = 0,
         max = 10,
-        value = 3
+        value = 3,
+        step = 0.5,
+        ticks = FALSE
       ),
-      
+      tags$h2("Mean and Standard Deviation"),
+      tableOutput("high_sd_overview"),
+      tags$h2("Range"),
+      tableOutput("data_minmax_highsd"),
+      tags$h1("High SD items - Data"),
       sliderInput(
         "z_score",
         "Devation steps",
         min = 0,
         max = 3,
-        value = 1
-      )
-      
-    ),
-    mainPanel(
-      tags$h3("High SD items - Summary"),
-      tags$h4("Mean and Standard Deviation"),
-      tableOutput("high_sd_overview"),
-      tags$h4("Range"),
-      tableOutput("data_minmax_highsd"),
-      tags$h3("High SD items - Data"),
+        value = 1,
+        step = 0.1,
+        ticks = FALSE
+      ),
       tableOutput("high_sd_data")
     )
     
@@ -143,13 +160,13 @@ ui <- fluidPage(navbarPage(
   tabPanel(
     "Plot",
     mainPanel(
-      plotlyOutput("plot", height = "500px")
-
+      tags$h1("Plot"),
+      plotlyOutput("plot", height = "500px"),
+      tags$caption("Plot of Normalized data")
     )
   )
   
 ))
-
 
 server <- function(input, output) {
   # Loading the Data
@@ -157,14 +174,37 @@ server <- function(input, output) {
   data_set <- reactive({
     inFile <- input$file1
     
-    data <- read_csv(inFile$datapath) %>%
+    df <- read_csv(inFile$datapath) %>%
       select(id = Lab_ID, everything()) %>%
       arrange(id)
     
-    data$id <- data$id %>% as.character()
+    df[df == '<LOD'] <- NA
     
-    data
+    df <- df %>% mutate_at(vars(-id,
+                                -Date,
+                                -Time,
+                                -Units,
+                                -Description,
+                                -matches("Test Label"),
+                                -matches("Collimation Status"),
+                                -matches("Method Name"),
+                                -matches("Instrument Serial Num"),
+                                -matches("Reading #")
+                                ),
+                                as.numeric)
     
+    df[is.na(df)] <- 0
+    
+    df$id <- as.character(df$id)
+    df$`Instrument Serial Num` <- as.integer(df$`Instrument Serial Num`)
+    df$`Reading #` <- as.integer(df$`Reading #`)
+    df$`Test Label` <- as.integer(df$`Test Label`)
+    
+    df$Notes[df$Notes == 0] <- NA
+    
+    df$Notes <- as.character(df$Notes)
+    
+    return(df)
   })
   # Clean data
   
@@ -187,6 +227,7 @@ server <- function(input, output) {
       select(!contains("Error")) %>%
       select(!`Collimation Status`) %>%
       select(id , starts_with(input$elements)) %>%
+      select(id, contains("Concentration")) %>% 
       select(id, sort(names(.))) %>% 
       filter(id %in% input$lab_id)
   })
