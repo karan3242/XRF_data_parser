@@ -136,7 +136,7 @@ ui <- fluidPage(navbarPage(
         min = 0,
         max = 10,
         value = 3,
-        step = 0.5,
+        step = 0.01,
         ticks = FALSE
       ),
       tags$h2("Mean and Standard Deviation"),
@@ -150,7 +150,7 @@ ui <- fluidPage(navbarPage(
         min = 0,
         max = 3,
         value = 1,
-        step = 0.1,
+        step = 0.01,
         ticks = FALSE
       ),
       tableOutput("high_sd_data")
