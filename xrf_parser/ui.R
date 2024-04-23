@@ -13,6 +13,7 @@ library(tidyverse)
 library(viridis)
 library(plotly)
 library(shinythemes)
+library(bslib)
 
 # Define the UI
 fluidPage(
@@ -21,105 +22,127 @@ fluidPage(
     "XRF Data Parsing",
     
     # Primary Data tab
-    tabPanel(
-      "Primary Data",
-      mainPanel(
-        fileInput(
-          "file1",
-          "Choose CSV File",
-          accept = c("text/csv", 
-                     "text/comma-separated-values,text/plain", 
-                     ".csv")
-        ),
-        tagList(
-          tags$h1("Primary Data"),
-          tags$p("<LOD values have been converted to 0"),
-          tableOutput("data_set")
-        )
-      )
-    ),
+    tabPanel("Primary Data",
+             mainPanel(
+               fileInput(
+                 "file1",
+                 "Choose CSV File",
+                 accept = c("text/csv",
+                            "text/comma-separated-values,text/plain",
+                            ".csv")
+               ),
+               tagList(
+                 tags$h1("Primary Data"),
+                 tags$p("<LOD values have been converted to 0"),
+                 tableOutput("data_set")
+               )
+             )),
     
     # Data Overview tab
     tabPanel(
       "Data Overview",
-      mainPanel(
-        tags$h1("Selected Elements"),
+      sidebarPanel(
         uiOutput("lab_items"),
         checkboxGroupInput(
           "elements",
           "Select Elements",
           choices = c(
-            "Ag", "Al", "As", "Au", "Bi", "Cd", "Co", "Cr", "Cu", "Fe", "Hf",
-            "Mg", "Mn", "Mo", "Nb", "Ni", "P", "Pb", "Pd", "Re", "S", "Sb",
-            "Sc", "Si", "Sn", "Sr", "Ta", "Ti", "V", "W", "Zn", "Zr"
-          ),
-          inline = TRUE,
-          selected = c(
-            "Ag", "Al", "As", "Au", "Bi", "Cd", "Co", "Cr", "Cu", "Fe",
-            "Hf", "Mg", "Mn", "Mo", "Nb", "Ni", "P", "Pb", "Pd", "Re", "S",
-            "Sb", "Sc", "Si", "Sn", "Sr", "Ta", "Ti", "V", "W", "Zn", "Zr"
+            "Ag",
+            "Al",
+            "As",
+            "Au",
+            "Bi",
+            "Cd",
+            "Co",
+            "Cr",
+            "Cu",
+            "Fe",
+            "Hf",
+            "Mg",
+            "Mn",
+            "Mo",
+            "Nb",
+            "Ni",
+            "P",
+            "Pb",
+            "Pd",
+            "Re",
+            "S",
+            "Sb",
+            "Sc",
+            "Si",
+            "Sn",
+            "Sr",
+            "Ta",
+            "Ti",
+            "V",
+            "W",
+            "Zn",
+            "Zr"
           )
         ),
-        tableOutput("data_clean"),
-        tags$h2("Summary"),
-        tableOutput("data_overview"),
-        tags$h2("Range"),
-        tableOutput("data_summary_minmax")
-      )
+        checkboxInput("all", "Select all", value = TRUE)
+      ),
+      mainPanel(navset_tab(
+        nav_panel("Selected Items",
+                  
+                  tableOutput("data_clean")),
+        nav_panel(
+          "Selected Elements",
+          tableOutput("data_overview"),
+          tableOutput("data_summary_minmax")
+        )
+      ))
     ),
     
     # Normalized Data tab
-    tabPanel(
-      "Normalized Data",
-      mainPanel(
-        tags$h1("Normalized Data of Selected Elements"),
-        tableOutput("data_normal"),
-        tags$h2("Summary"),
-        tableOutput("data_overview_norm"),
-        tags$h2("Range"),
-        tableOutput("data_overview_minmax")
-      )
-    ),
+    tabPanel("Normalized Data",
+             navset_tab(
+               nav_panel("Normalized Data", tableOutput("data_normal")),
+               nav_panel(
+                 "Summary",
+                 tableOutput("data_overview_norm"),
+                 tableOutput("data_overview_minmax")
+               )
+             )),
     
     # High SD Readings tab
-    tabPanel(
-      "High SD Readings",
-      mainPanel(
-        tags$h1("High SD items - Summary"),
-        sliderInput(
-          "cutoff",
-          "Deviation Percentage Cutoff",
-          min = 0,
-          max = 10,
-          value = 3,
-          step = 0.01,
-          ticks = FALSE
-        ),
-        tags$h2("Mean and Standard Deviation"),
-        tableOutput("high_sd_overview"),
-        tags$h2("Range"),
-        tableOutput("data_minmax_highsd"),
-        tags$h1("High SD items - Data"),
-        sliderInput(
-          "z_score",
-          "Deviation Steps",
-          min = 0,
-          max = 3,
-          value = 1,
-          step = 0.01,
-          ticks = FALSE
-        ),
-        tableOutput("high_sd_data")
-      )
-    ),
+    tabPanel("Outliers",
+             navset_tab(
+               nav_panel(
+                 "Summary",
+                 sliderInput(
+                   "cutoff",
+                   "Deviation Percentage Cutoff",
+                   min = 0,
+                   max = 10,
+                   value = 3,
+                   step = 0.01,
+                   ticks = FALSE
+                 ),
+                 tags$h2("Mean and Standard Deviation"),
+                 tableOutput("high_sd_overview"),
+                 tags$h2("Range"),
+                 tableOutput("data_minmax_highsd")
+               ),
+               nav_panel(
+                 "Readings",
+                 sliderInput(
+                   "z_score",
+                   "Deviation Steps",
+                   min = 0,
+                   max = 3,
+                   value = 1,
+                   step = 0.01,
+                   ticks = FALSE
+                 ),
+                 tableOutput("high_sd_data")
+               )
+             )),
     
     # Plot tab
-    tabPanel(
-      "Plot",
-      mainPanel(
-        # tags$h1("Plot"),
-        plotlyOutput("plot")
-      )
-    )
+    tabPanel("Plot",
+             mainPanel(# tags$h1("Plot"),
+               plotlyOutput("plot")))
   )
 )

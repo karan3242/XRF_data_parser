@@ -13,7 +13,55 @@ library(tidyverse)
 library(viridis)
 library(plotly)
 
-function(input, output) {
+el = c(
+  "Ag",
+  "Al",
+  "As",
+  "Au",
+  "Bi",
+  "Cd",
+  "Co",
+  "Cr",
+  "Cu",
+  "Fe",
+  "Hf",
+  "Mg",
+  "Mn",
+  "Mo",
+  "Nb",
+  "Ni",
+  "P",
+  "Pb",
+  "Pd",
+  "Re",
+  "S",
+  "Sb",
+  "Sc",
+  "Si",
+  "Sn",
+  "Sr",
+  "Ta",
+  "Ti",
+  "V",
+  "W",
+  "Zn",
+  "Zr"
+)
+
+function(input, output, session) {
+  
+  #Select all check box
+  
+  observe({
+    updateCheckboxGroupInput(
+      session,
+      "elements",
+      inline = TRUE,
+      choices = el,
+      selected = if(input$all) el
+    )
+  })
+  
   # Loading the Data
   
   data_set <- reactive({
