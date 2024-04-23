@@ -236,8 +236,12 @@ function(input, output) {
         ) +
         scale_fill_viridis(discrete = TRUE, name = "") +
         theme_classic() +
-        xlab("Items.") +
-        ylab("Percentage.")
+        theme(axis.line = element_blank(),
+              axis.ticks = element_blank(),
+              )+
+        labs(x = NULL, 
+             y = "Element %",
+             title = "Elemet values - Normalized Data")
     )
     
   })

@@ -12,9 +12,11 @@ library(readr)
 library(tidyverse)
 library(viridis)
 library(plotly)
+library(shinythemes)
 
 # Define the UI
 fluidPage(
+  theme = shinytheme("flatly"),
   navbarPage(
     "XRF Data Parsing",
     
@@ -115,9 +117,8 @@ fluidPage(
     tabPanel(
       "Plot",
       mainPanel(
-        tags$h1("Plot"),
-        plotlyOutput("plot"),
-        tags$caption("Plot of Normalized Data")
+        # tags$h1("Plot"),
+        plotlyOutput("plot")
       )
     )
   )
