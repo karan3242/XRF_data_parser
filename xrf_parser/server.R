@@ -62,6 +62,17 @@ function(input, output, session) {
     )
   })
   
+  # observe({
+  #   updateCheckboxGroupInput(
+  #     session,
+  #     "lab_id",
+  #     inline = TRUE,
+  #     choices = unique(data_set()$id),
+  #     selected = if(input$it_all) unique(data_set()$id)
+  #   )
+  # })
+  
+  
   # Loading the Data
   
   data_set <- reactive({

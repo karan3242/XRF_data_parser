@@ -23,8 +23,7 @@ fluidPage(
     
     # Primary Data tab
     tabPanel("Primary Data",
-             mainPanel(
-               fileInput(
+             fileInput(
                  "file1",
                  "Choose CSV File",
                  accept = c("text/csv",
@@ -36,13 +35,14 @@ fluidPage(
                  tags$p("<LOD values have been converted to 0"),
                  tableOutput("data_set")
                )
-             )),
+             ),
     
     # Data Overview tab
     tabPanel(
       "Data Overview",
       sidebarPanel(
         uiOutput("lab_items"),
+        # checkboxInput("it_all", "Select all", value = TRUE),
         checkboxGroupInput(
           "elements",
           "Select Elements",
@@ -142,7 +142,7 @@ fluidPage(
     
     # Plot tab
     tabPanel("Plot",
-             mainPanel(# tags$h1("Plot"),
-               plotlyOutput("plot")))
+            # tags$h1("Plot"),
+               plotlyOutput("plot"))
   )
 )
