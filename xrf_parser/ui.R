@@ -88,7 +88,7 @@ fluidPage(
                   
                   tableOutput("data_clean")),
         nav_panel(
-          "Selected Elements",
+          "Elements Overview",
           tableOutput("data_overview"),
           tableOutput("data_summary_minmax")
         )
@@ -143,6 +143,9 @@ fluidPage(
     # Plot tab
     tabPanel("Plot",
             # tags$h1("Plot"),
-               plotlyOutput("plot"))
+               plotlyOutput("plot")),
+    # About Page
+    tabPanel("About",
+             includeMarkdown("../README.md"))
   )
 )

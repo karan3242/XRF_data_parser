@@ -61,19 +61,8 @@ function(input, output, session) {
       selected = if(input$all) el
     )
   })
-  
-  # observe({
-  #   updateCheckboxGroupInput(
-  #     session,
-  #     "lab_id",
-  #     inline = TRUE,
-  #     choices = unique(data_set()$id),
-  #     selected = if(input$it_all) unique(data_set()$id)
-  #   )
-  # })
-  
-  
-  # Loading the Data
+
+  # Base data set with pre-processing
   
   data_set <- reactive({
     inFile <- input$file1
@@ -115,9 +104,12 @@ function(input, output, session) {
     
     return(df)
   })
+  output$data_set <- renderTable({data_set()})
+  
   # Clean data
   
-  # Lab items out put
+  # Lab items output selection
+  
   output$lab_items <- renderUI({
     req(data_set())
     print(unique(data_set()$id))
@@ -129,6 +121,9 @@ function(input, output, session) {
       selected = unique(data_set()$id)
     )
   })
+  output$data_summary_minmax <- renderTable({data_summary_minmax()})
+  
+  # Render data set after items and elements selected
   
   data_set_clean <- reactive({
     req(input$lab_id, data_set())
@@ -140,8 +135,27 @@ function(input, output, session) {
       select(id, sort(names(.))) %>% 
       filter(id %in% input$lab_id)
   })
+  output$data_clean <- renderTable({data_set_clean()})
   
-  # Normal data
+  # Mean and SD of clean Data
+  
+  data_overview <- reactive({
+    data_set_clean() %>%
+      group_by(id) %>%
+      summarise(across(everything(), list(mean = mean, sd = sd)))
+  })
+  output$data_overview <- renderTable({data_overview()})
+  
+  # Min-Max of clean Data
+  
+  data_summary_minmax <-reactive({
+    data_set_clean() %>%
+      group_by(id) %>%
+      summarise(across(everything(), list(min = min, max = max)))
+  })
+  output$data_summary_minmax <- renderTable({data_summary_minmax()})
+  
+  # Normalized Data set
   
   data_set_normal <- reactive({
     normalize_rows <- function(data) {
@@ -166,30 +180,25 @@ function(input, output, session) {
     
     normalize_rows(data_set_clean())
   })
+  output$data_normal <- renderTable({data_set_normal()})
   
-  data_overview <- reactive({
-    data_set_clean() %>%
-      group_by(id) %>%
-      summarise(across(everything(), list(mean = mean, sd = sd)))
-  })
-  
-  data_summary_minmax <-reactive({
-    data_set_clean() %>%
-      group_by(id) %>%
-      summarise(across(everything(), list(min = min, max = max)))
-  })
+  # Mean and SD of Normalized data
   
   data_overview_norm <- reactive({
     data_set_normal() %>%
       group_by(id) %>%
       summarise(across(everything(), list(mean = mean, sd = sd)))
   })
+  output$data_overview_norm <- renderTable({data_overview_norm()})
+  
+  # Min-Max of Normalized data
   
   data_overview_minmax <-reactive({
     data_set_normal() %>%
       group_by(id) %>%
       summarise(across(everything(), list(min = min, max = max)))
   })
+  output$data_overview_minmax <- renderTable({data_overview_minmax()})
   
   # Isolating High SD data
   
@@ -204,6 +213,9 @@ function(input, output, session) {
       select(id, ends_with("sd")) %>%
       select_if(~ any(high_sd(.)))
   })
+  output$high_sd <- renderTable({high_sd()})
+    
+  # Mean and SD of date with high SD determined by Threshold
   
   high_sd_overview <- reactive({
     columns <-
@@ -217,6 +229,9 @@ function(input, output, session) {
       group_by(id) %>%
       select(id, starts_with(columns))
   })
+  output$high_sd_overview <- renderTable({high_sd_overview()})
+  
+  # Table for min-max range of items with high standard divination determined by Threshold
   
   data_minmax_highsd <- reactive({
     columns <-
@@ -230,6 +245,9 @@ function(input, output, session) {
       group_by(id) %>%
       select(id, starts_with(columns))
   })
+  output$data_minmax_highsd <- renderTable({data_minmax_highsd()})
+  
+  # Filters items with Z score above set threshold
   
   high_sd_data <- reactive({
     columns <-
@@ -252,6 +270,9 @@ function(input, output, session) {
       filter(if_any(ends_with("z_score"), outliers))
     
   })
+  output$high_sd_data <- renderTable({high_sd_data()})
+  
+  # Piloting the data
   
   data_plot <- reactive({
     data_mean <-
@@ -304,20 +325,6 @@ function(input, output, session) {
     )
     
   })
-  
-  # Outputs
-  
-  output$data_set <- renderTable({data_set()})
-  output$data_clean <- renderTable({data_set_clean()})
-  output$data_normal <- renderTable({data_set_normal()})
-  output$data_overview <- renderTable({data_overview()})
-  output$data_overview_norm <- renderTable({data_overview_norm()})
-  output$high_sd <- renderTable({high_sd()})
-  output$high_sd_data <- renderTable({high_sd_data()})
-  output$high_sd_overview <- renderTable({high_sd_overview()})
-  output$data_overview_minmax <- renderTable({data_overview_minmax()})
-  output$data_summary_minmax <- renderTable({data_summary_minmax()})
-  output$data_minmax_highsd <- renderTable({data_minmax_highsd()})
   output$plot <- renderPlotly({data_plot()})
   
 }
