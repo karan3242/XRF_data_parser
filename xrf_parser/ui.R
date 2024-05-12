@@ -40,7 +40,6 @@ fluidPage(
     # Data Overview tab
     tabPanel(
       "Data Overview",
-      sidebarPanel(
         uiOutput("lab_items"),
         # checkboxInput("it_all", "Select all", value = TRUE),
         checkboxGroupInput(
@@ -81,9 +80,8 @@ fluidPage(
             "Zr"
           )
         ),
-        checkboxInput("all", "Select all", value = TRUE)
-      ),
-      mainPanel(navset_tab(
+        checkboxInput("all", "Select all", value = TRUE),
+      navset_tab(
         nav_panel("Selected Items",
                   
                   tableOutput("data_clean")),
@@ -92,7 +90,7 @@ fluidPage(
           tableOutput("data_overview"),
           tableOutput("data_summary_minmax")
         )
-      ))
+      )
     ),
     
     # Normalized Data tab
