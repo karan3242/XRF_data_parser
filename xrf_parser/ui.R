@@ -141,7 +141,10 @@ fluidPage(
     # Plot tab
     tabPanel("Plot",
             # tags$h1("Plot"),
-               plotlyOutput("plot")),
+            plotlyOutput("plot"),
+            downloadButton('dl',"Download the data"),
+            ),
+    
     # About Page
     tabPanel("About",
              includeMarkdown("../README.md"))

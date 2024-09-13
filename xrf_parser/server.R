@@ -12,6 +12,7 @@ library(readr)
 library(tidyverse)
 library(viridis)
 library(plotly)
+library(writexl)
 
 el = c(
   "Ac",
@@ -412,5 +413,31 @@ function(input, output, session) {
     
   })
   output$plot <- renderPlotly({data_plot()})
+  
+
+  output$dl <- downloadHandler(
+    
+    filename = function() {
+      paste0("df_dmodel", "_Table", ".xlsx")
+    },
+    content = function(file){
+      tbl_primary<- data_set()
+      tbl_selected_itmes<- data_set_clean()
+      tbl_elements_overview<- data_overview()
+      tbl_elements_minmax<- data_summary_minmax()
+      tbl_normalized<- data_set_normal()
+      tbl_normal_overview<- data_overview_norm()
+      tbl_normal_minmax<- data_overview_minmax()
+      tbl_highsd<- high_sd()
+      tbl_highsd_overview<- high_sd_overview()
+      tbl_highsd_minmax<- data_minmax_highsd()
+      tbl_highsd_values<- high_sd_data()
+      
+      sheets <- mget(ls(pattern = "tbl")) # getting all objects in your environment with tbl in the name
+      #names(sheets) <- paste0("sheet", seq_len(length(sheets))) # changing the names in your list
+      writexl::write_xlsx(sheets, path = file) # saving the file
+    }
+  ) 
+  
   
 }
