@@ -98,11 +98,13 @@ output$yaxis <- renderUI({
 plot1 <- reactive({ggplot(df3(), aes(x=kev)) +
   geom_area(aes(y=`2`, fill ='Exposer 2')) +
   geom_area(aes(y = `1`, fill = 'Exposer 1'))+
-  ylim = c(0, input$yaxis)) +
+  scale_color_paletteer_d("rcartocolor::Geyser")+
+  coord_cartesian(xlim= c(input$xaxis[1], input$xaxis[2]), ylim = c(0, input$yaxis)) +
+  theme_bw() +
   labs(y = "Counts/s", x = "Kev") +
-  theme_ipsum_ps() +
   theme(legend.position = "bottom", legend.title = element_blank()) +
-  labs(title = input$title, col = "Energy") 
+  labs(title = input$title, col = 'variable')
+  
 })
 output$plot <- renderPlot({plot1()
    
