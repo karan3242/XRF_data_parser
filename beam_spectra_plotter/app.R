@@ -35,6 +35,8 @@ ui <- fluidPage(
     
 )
 
+
+
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   
@@ -65,29 +67,24 @@ df3 <- reactive({
   df3$kev <- kev
   df3 <- mutate_all(df3, as.double)
 })
-output$df3 <-renderTable({df3()})
+#output$df3 <-renderTable({df3()})
 
-output$plot <- renderPlot({
-  if(max(col(df3())) < 4){
-  Plot <- ggplot(df3(), aes(x=kev, y = `1`, fill = 'Exposer 1')) +
-    geom_area()+
-    geom_area(aes(y=`2`, fill = 'Exposer 2')) +
-    xlim(input$xaxis[1], input$xaxis[2]) +
-    labs(y = "Counts", x = "Kev")} +
-    theme_ipsum() +
-    theme(legend.position = "bottom", legend.title = element_blank())
-  else{
-  Plot <- ggplot(df3(), aes(x=kev, y = `1`, colour = 'Exposer 1')) +
-    geom_area()+
-    geom_area(aes(y=`2`, fill = 'Exposer 2')) +
-    geom_area(aes(y=`3`, fill = 'Exposer 3')) +
-    xlim(input$xaxis[1], input$xaxis[2]) +
-    labs(y = "Counts", x = "Kev") +
-    theme_ipsum() +
-    theme(legend.position = "bottom", legend.title = element_blank())
-    }
-},
-height = 700)
+plot1 <- reactive({ggplot(df3(), aes(x=kev)) +
+  geom_line(aes(y = `1`, col = 'white'))+
+  geom_area(aes(y = `1`, fill = 'red'))+
+  geom_line(aes(y=`2`, col = 'white')) +
+  geom_area(aes(y = `2`, fill = 'blue'))+
+  xlim(input$xaxis[1], input$xaxis[2]) +
+  labs(y = "Counts", x = "Kev") +
+  theme_ipsum() +
+  theme(legend.position = "bottom", legend.title = element_blank())
+})
+output$plot <- renderPlot({plot1()
+   
+  # plot2 <- plot1 + 
+  #   geom_area(aes(y=`3`, fill = 'Exposer 3'))
+
+}, height = 700)
 
 
 } # Run the application 
