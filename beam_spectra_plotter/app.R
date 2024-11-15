@@ -31,16 +31,16 @@ ui <- fluidPage(
                        ".csv")
                     ),
           uiOutput("readings"),
-          sliderInput("xaxis", "X-axis", 0, 41, value = c(0,10)),
+          uiOutput("xaxis"),
           uiOutput("yaxis"),
           textInput("title", "Plot Title", "Item", placeholder = "Item"),
           tags$div(
             style = "display: flex; flex-direction: column;",
             tags$div(
               style = "display: flex; flex-direction: row;",
-              textInput("dpi", "Select dpi:", 300, placeholder = "300"),
+              textInput("dpi", "Select dpi:", 250, placeholder = "250"),
               textInput("pwidth", "Select Width:", 1920, placeholder = "1920"),
-              textInput("pheight", "Select Height:", 1080, placeholder = "1080")
+              textInput("pheight", "Select Height:", 1440, placeholder = "1440")
             ),
             tags$div(
               style = "display: flex; flex-direction: row;",
@@ -51,7 +51,7 @@ ui <- fluidPage(
           )
           
           ),
-        mainPanel(plotOutput("plot"))
+        mainPanel(plotOutput("plot", height = 700))
     
 )
 
@@ -89,6 +89,11 @@ df3 <- reactive({
 })
 #output$df3 <-renderTable({df3()})
 
+output$xaxis <- renderUI({
+  xmax <- max(df3()$kev)
+  sliderInput("xaxis", "X-axis", 0, xmax, value = c(0,10))
+})
+
 output$yaxis <- renderUI({
   lim <- max(max(df3()[,1]),max(df3()[,2]))
   sliderInput("yaxis", "Y-axis", 0, lim, value = lim)
@@ -98,11 +103,19 @@ output$yaxis <- renderUI({
 plot1 <- reactive({ggplot(df3(), aes(x=kev)) +
   geom_area(aes(y=`2`, fill ='Exposer 2')) +
   geom_area(aes(y = `1`, fill = 'Exposer 1'))+
-  scale_color_paletteer_d("rcartocolor::Geyser")+
+  scale_fill_manual(values = c("#CD6C53", "#839FBA"), 
+                    labels = c("Exposer 1", "Exposer 2")) +
   coord_cartesian(xlim= c(input$xaxis[1], input$xaxis[2]), ylim = c(0, input$yaxis)) +
-  theme_bw() +
-  labs(y = "Counts/s", x = "Kev") +
-  theme(legend.position = "bottom", legend.title = element_blank()) +
+  scale_y_continuous(expand = expansion(mult = 0)) +
+  theme_light() +
+  labs(y = "Counts/s", x = "KeV") +
+  theme(legend.position = "inside",
+        legend.justification = c("left", "top"),
+        legend.title = element_blank(),
+        legend.background = element_rect(size = 1,
+                                         color = "grey",
+                                         ),
+        axis.title = element_text(face="bold")) +
   labs(title = input$title, col = 'variable')
   
 })
