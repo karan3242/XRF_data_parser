@@ -109,8 +109,8 @@ plot1 <- reactive({ggplot(df3(), aes(x=kev)) +
   scale_y_continuous(expand = expansion(mult = 0)) +
   theme_light() +
   labs(y = "Counts/s", x = "KeV") +
-  theme(legend.position = "inside",
-        legend.justification = c("left", "top"),
+  theme(legend.position = "bottom",
+        #legend.justification = c("left", "top"),
         legend.title = element_blank(),
         legend.background = element_rect(size = 1,
                                          color = "grey",
