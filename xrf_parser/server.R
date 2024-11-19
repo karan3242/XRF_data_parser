@@ -434,17 +434,12 @@ function(input, output, session) {
       paste0("df_dmodel", "_Table", ".xlsx")
     },
     content = function(file) {
-      tbl_primary <- data_set1()
-      tbl_selected_itmes <- data_set_clean()
-      tbl_elements_overview <- data_overview()
-      tbl_elements_minmax <- data_summary_minmax()
-      tbl_normalized <- data_set2()()
-      tbl_normal_overview <- data_overview_norm()
-      tbl_normal_minmax <- data_overview_minmax()
-      tbl_highsd <- high_sd()
-      tbl_highsd_overview <- high_sd_overview()
-      tbl_highsd_minmax <- data_minmax_highsd()
-      tbl_highsd_values <- high_sd_data()
+      tbl1_primary <- data_set1()
+      tbl2_total <- data_set2()
+      tbl3_clean <- reading_item_selected()
+      tbl4_sd <- reading_item_selected_sd()
+      tbl5_minmax <- reading_item_selected_minmax()
+      
       
       sheets <- mget(ls(pattern = "tbl")) # getting all objects in your environment with tbl in the name
       #names(sheets) <- paste0("sheet", seq_len(length(sheets))) # changing the names in your list
