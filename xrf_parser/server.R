@@ -13,15 +13,12 @@ library(tidyverse)
 library(viridis)
 library(plotly)
 library(writexl)
+library(CC)
 
 function(input, output, session) {
-  #Select all check box
-  
-  
-  
   # Base data set with pre-processing
   
-  data_set <- reactive({
+  data_set1 <- reactive({
     inFile <- input$file1
     
     df <- read_csv(inFile$datapath) %>%
@@ -52,30 +49,27 @@ function(input, output, session) {
     
     return(df)
   })
-  output$data_set <- renderTable({
-    data_set()
+  output$data_set1 <- renderTable({
+    data_set1()
   })
   
   # Lab items output selection
-  
+  #lab itmes selections
   output$lab_items <- renderUI({
-    req(data_set())
+    req(data_set1())
     checkboxGroupInput(
       "lab_id",
       "Select Lab Items",
-      choices = unique(data_set()$id),
+      choices = unique(data_set1()$id),
       inline = TRUE,
-      selected = unique(data_set()$id)
+      selected = unique(data_set1()$id)
     )
   })
-  output$data_summary_minmax <- renderTable({
-    data_summary_minmax()
-  })
-  
+  ## element selections
   output$elm <- renderUI({
-    req(data_set())
+    req(data_set1())
     elmt <- sort(gsub('.{14}$', '', colnames(select(
-      data_set(), contains("Concentration")
+      data_set1(), contains("Concentration")
     ))))
     checkboxGroupInput(
       "elm",
@@ -86,28 +80,62 @@ function(input, output, session) {
     )
   })
   
-  #element elections
-  
-  # Render data set after items and elements selected
-  
+  # Cleaned And Normalized Data
+  ## Clean data
   data_set_clean <- reactive({
-    req(input$lab_id, data_set())
-    data_set() %>%
-      select(!contains("Error")) %>%
-      select(!`Collimation Status`) %>%
-      select(id , starts_with(input$elm)) %>%
-      select(id, contains("Concentration")) %>%
-      select(id, sort(names(.))) %>%
+    req(input$lab_id, data_set1())
+    df1 <- data_set1() %>%
+      select(id , `Reading #`, starts_with(input$elm)) %>%
+      select(id, `Reading #`, contains("Concentration")) %>%
+      select(id, `Reading #`, sort(names(.))) %>%
       filter(id %in% input$lab_id)
+    
+    coln <- gsub('.Concentration$', '', colnames(select(df1, contains("Concentration"))))
+    
+    colnames(df1) <- c("id", "reading", coln)
+    
+    print(df1)
   })
-  output$data_clean <- renderTable({
-    data_set_clean()
+  ## Nomral Data
+  data_set_normal <- reactive({
+    normalize_rows <- function(data) {
+      # Extracting IDs (assuming they are in the first column)
+      ids <- data[, 1]
+      readings <- data[, 2]
+      
+      # Normalizing each row to 100%
+      normalized_data <-
+        t(apply(data[, -c(1, 2), drop = FALSE], 1, function(row) {
+          row_sum <- sum(row, na.rm = TRUE)
+          
+          normalized_row <- row / row_sum * 100
+          
+          return(normalized_row)
+        }))
+      
+      # Combining IDs with normalized data
+      normalized_data <- cbind(ids, readings, normalized_data)
+      
+      return(normalized_data)
+    }
+    
+    normalize_rows(data_set_clean())
+  })
+ 
+  # Render data set after items and elements selected
+  data_set2 <- reactive({
+    if(input$normal_select == FALSE){data_set_clean()}else{data_set_normal()}
+  })
+  
+  output$data_set2 <- renderTable({
+    data_set2()
   })
   
   # Mean and SD of clean Data
   
   data_overview <- reactive({
-    data_set_clean() %>%
+    data_set2() %>%
+      select(!contains("reading")) %>% 
       group_by(id) %>%
       summarise(across(everything(), list(mean = mean, sd = sd)))
   })
@@ -118,7 +146,8 @@ function(input, output, session) {
   # Min-Max of clean Data
   
   data_summary_minmax <- reactive({
-    data_set_clean() %>%
+    data_set2() %>%
+      select(!contains("reading")) %>% 
       group_by(id) %>%
       summarise(across(everything(), list(min = min, max = max)))
   })
@@ -126,66 +155,14 @@ function(input, output, session) {
     data_summary_minmax()
   })
   
-  # Normalized Data set
-  
-  data_set_normal <- reactive({
-    normalize_rows <- function(data) {
-      # Extracting IDs (assuming they are in the first column)
-      ids <- data[, 1]
-      
-      # Normalizing each row to 100%
-      normalized_data <-
-        t(apply(data[, -1, drop = FALSE], 1, function(row) {
-          row_sum <- sum(row, na.rm = TRUE)
-          
-          normalized_row <- row / row_sum * 100
-          
-          return(normalized_row)
-        }))
-      
-      # Combining IDs with normalized data
-      normalized_data <- cbind(ids, normalized_data)
-      
-      return(normalized_data)
-    }
-    
-    normalize_rows(data_set_clean())
-  })
-  output$data_normal <- renderTable({
-    data_set_normal()
-  })
-  
-  # Mean and SD of Normalized data
-  
-  data_overview_norm <- reactive({
-    data_set_normal() %>%
-      group_by(id) %>%
-      summarise(across(everything(), list(mean = mean, sd = sd)))
-  })
-  output$data_overview_norm <- renderTable({
-    data_overview_norm()
-  })
-  
-  # Min-Max of Normalized data
-  
-  data_overview_minmax <- reactive({
-    data_set_normal() %>%
-      group_by(id) %>%
-      summarise(across(everything(), list(min = min, max = max)))
-  })
-  output$data_overview_minmax <- renderTable({
-    data_overview_minmax()
-  })
-  
   # Isolating High SD data
   
   high_sd <- reactive({
-    high_sd <-
-      function(x) {
+    high_sd <- function(x) {
         x >= input$cutoff
       }
     
-    data_overview_norm() %>%
+    data_overview() %>%
       filter(if_any(ends_with("sd"), high_sd)) %>%
       select(id, ends_with("sd")) %>%
       select_if( ~ any(high_sd(.)))
@@ -200,7 +177,7 @@ function(input, output, session) {
     columns <-
       substr(colnames(high_sd()[2:(max(col(high_sd())))]), start = 1, stop = 2)
     
-    data_overview_norm() %>%
+    data_overview() %>%
       filter(id %in% (high_sd()$id %>% as.array())) %>%
       arrange(id) %>%
       group_by(id) %>%
@@ -216,7 +193,7 @@ function(input, output, session) {
     columns <-
       substr(colnames(high_sd()[2:(max(col(high_sd())))]), start = 1, stop = 2)
     
-    data_overview_minmax() %>%
+    data_summary_minmax() %>%
       filter(id %in% (high_sd()$id %>% as.array())) %>%
       arrange(id) %>%
       group_by(id) %>%
@@ -233,11 +210,11 @@ function(input, output, session) {
       substr(colnames(high_sd()[2:(max(col(high_sd())))]), start = 1, stop = 2)
     
     
-    outliers <- function(x) {
+    outliers <- function(x){
       x > input$z_score | x < (input$z_score * (-1))
     }
     
-    data_set_normal() %>%
+    data_set2() %>%
       filter(id %in% (high_sd()$id %>% as.array())) %>%
       arrange(id) %>%
       group_by(id) %>%
@@ -251,11 +228,109 @@ function(input, output, session) {
     high_sd_data()
   })
   
+  # Individual Item summary
+  
+  ## Item Data
+  
+  output$one_item <- renderUI({
+    selectInput(
+      "one_item", 
+      "Item", 
+      choices = unique(unlist(data_set_clean()$id)),
+      selected = NULL)
+  })
+  
+  output$elm2 <- renderUI({
+    req(data_set2())
+    elmt <- data_set2() %>% 
+      select(!contains("id")) %>%
+      select(!contains("reading")) %>% 
+      colnames() %>% 
+      sort()
+
+    checkboxGroupInput(
+      "elm2",
+      "Select Elements",
+      choices = elmt,
+      inline = TRUE,
+      selected = elmt
+    )
+  })
+  
+  one_item_data <- reactive({
+    data_set2() %>% 
+      filter(id %in% input$one_item) %>% 
+      select(id, reading, input$elm2)
+  })
+  
+  one_item_box <- reactive({
+    df1 <- one_item_data() %>% select(!contains("reading"))
+    df2 <- pivot_longer(df1, 
+                        cols = colnames(df1)[2:max(col(df1))], 
+                        names_to = 'Elements', 
+                        values_to = 'counts')
+    plot <- ggplot(df2, aes(x = Elements, y = counts, fill = Elements)) + 
+      geom_boxplot() + 
+      scale_fill_viridis(discrete = TRUE, alpha=0.6) +
+      geom_jitter() +
+      theme(legend.position="none")
+    
+    print(plot)
+  })
+  
+  output$one_item_data <- renderTable({one_item_data()})
+  
+
+  output$boxplot <- renderPlot({one_item_box()})
+  
+  ## Item Outlighers
+  
+  one_item_outlier <- reactive({
+    columns <-
+      substr(colnames(high_sd()[2:(max(col(high_sd())))]), start = 1, stop = 2)
+    
+    one_item_data() %>% select(id, reading, starts_with(columns))
+  })
+  
+  output$one_item_outlier <- renderTable({one_item_outlier()})
+  
+  output$one_item_summary <- renderPrint({
+    summary({one_item_outlier() %>% select(!contains("id")) %>%  
+        select(!contains("reading"))})
+    
+  })
+  
+  output$one_item_high_sd <- renderTable({
+    
+    one_item_outlier()  %>% 
+      select(!contains("reading")) %>% 
+      group_by(id) %>%
+      summarise(across(everything(), list(sd = sd, range = diffrange)))
+    
+    })
+  
+  outlier_boxplot <- reactive({
+    
+    p1 <- pivot_longer(one_item_outlier()[,], 
+                 cols = colnames(one_item_outlier())[2:max(col(one_item_outlier()))], 
+                 names_to = 'Elements', 
+                 values_to = 'counts')
+    p1 <- p1 %>% filter(Elements != "reading")
+    plot <- ggplot(p1, aes(x = Elements, y = counts, fill = Elements)) + 
+      geom_boxplot() + 
+      scale_fill_viridis(discrete = TRUE, alpha=0.6) +
+      theme(legend.position="none")
+    
+    print(plot)
+  })
+  
+  output$outlier_boxplot <- renderPlot({outlier_boxplot()})
+  
   # Piloting the data
   
   data_plot <- reactive({
     data_mean <-
-      data_overview_norm() %>%
+      data_overview() %>%
       pivot_longer(
         cols = (contains("mean")),
         names_to = "Type",
@@ -264,7 +339,7 @@ function(input, output, session) {
       select(id, Type, Value_mean)
     
     data_sd <-
-      data_overview_norm() %>%
+      data_overview() %>%
       pivot_longer(
         cols = (contains("sd")),
         names_to = "Type",
@@ -314,11 +389,11 @@ function(input, output, session) {
       paste0("df_dmodel", "_Table", ".xlsx")
     },
     content = function(file) {
-      tbl_primary <- data_set()
+      tbl_primary <- data_set1()
       tbl_selected_itmes <- data_set_clean()
       tbl_elements_overview <- data_overview()
       tbl_elements_minmax <- data_summary_minmax()
-      tbl_normalized <- data_set_normal()
+      tbl_normalized <- data_set2()()
       tbl_normal_overview <- data_overview_norm()
       tbl_normal_minmax <- data_overview_minmax()
       tbl_highsd <- high_sd()

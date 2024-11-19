@@ -32,7 +32,7 @@ fluidPage(
       tagList(
         tags$h1("Primary Data"),
         tags$p("<LOD values have been converted to 0"),
-        tableOutput("data_set")
+        tableOutput("data_set1")
       )
     ),
     
@@ -41,58 +41,66 @@ fluidPage(
       "Data Overview",
       uiOutput("lab_items"),
       uiOutput("elm"),
+      checkboxInput("normal_select", "Normalized Data"),
       navset_tab(
-        nav_panel("Selected Items", tableOutput("data_clean")),
+        nav_panel("Selected Items", tableOutput("data_set2")),
         nav_panel(
           "Elements Overview",
           tableOutput("data_overview"),
           tableOutput("data_summary_minmax")
+        ),
+        nav_panel(
+          "Deviations",
+          sliderInput(
+            "cutoff",
+            "Deviation Percentage Cutoff",
+            min = 0,
+            max = 10,
+            value = 3,
+            step = 0.01,
+            ticks = FALSE
+          ),
+          tags$h2("Mean and Standard Deviation"),
+          tableOutput("high_sd_overview"),
+          tags$h2("Range"),
+          tableOutput("data_minmax_highsd")
+        ),
+        nav_panel(
+          "Z-Score",
+          sliderInput(
+            "z_score",
+            "Deviation Steps",
+            min = 0,
+            max = 3,
+            value = 1,
+            step = 0.01,
+            ticks = FALSE
+          ),
+          tableOutput("high_sd_data")
         )
       )
     ),
     
-    # Normalized Data tab
-    tabPanel("Normalized Data", navset_tab(
-      nav_panel("Normalized Data", tableOutput("data_normal")),
+    tabPanel(
+      "Item Summary",
+      uiOutput("one_item"),
+      navs_tab(
+        nav_panel(
+        "Item Data",
+      uiOutput("elm2"),
+      tableOutput("one_item_data"),
+      tags$h2("Data Summary"),
+      
+      plotOutput("boxplot")),
       nav_panel(
-        "Summary",
-        tableOutput("data_overview_norm"),
-        tableOutput("data_overview_minmax")
+        "Item Outliers",
+        tableOutput("one_item_outlier"),
+        tableOutput("one_item_high_sd"),
+        verbatimTextOutput("one_item_summary"),
+        plotOutput("outlier_boxplot")
       )
-    )),
-    
-    # High SD Readings tab
-    tabPanel("Outliers", navset_tab(
-      nav_panel(
-        "Summary",
-        sliderInput(
-          "cutoff",
-          "Deviation Percentage Cutoff",
-          min = 0,
-          max = 10,
-          value = 3,
-          step = 0.01,
-          ticks = FALSE
-        ),
-        tags$h2("Mean and Standard Deviation"),
-        tableOutput("high_sd_overview"),
-        tags$h2("Range"),
-        tableOutput("data_minmax_highsd")
-      ),
-      nav_panel(
-        "Readings",
-        sliderInput(
-          "z_score",
-          "Deviation Steps",
-          min = 0,
-          max = 3,
-          value = 1,
-          step = 0.01,
-          ticks = FALSE
-        ),
-        tableOutput("high_sd_data")
       )
-    )),
+    ),
     
     # Plot tab
     tabPanel(
