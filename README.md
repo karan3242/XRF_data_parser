@@ -7,7 +7,7 @@
 -   OLYMPUS VANTA pXRF device
 -   GeoChem export method
 
-Ensure the CSV export follows the GeoChem format with Item notes labeled as `LAB_ID`. The ID should contain both letters and numbers for string value compatibility. Note that `<LOD` values must be replaced with `0` before file upload, as the program does not support `<LOD` readings.
+Ensure the CSV export follows the GeoChem format with Item notes labeled as `LAB_ID`. The ID should contain both letters and numbers for string value compatibility.
 
 # XRF Chemistry Analyser
 ## Features
