@@ -236,7 +236,7 @@ function(input, output, session) {
     selectInput(
       "one_item", 
       "Item", 
-      choices = unique(unlist(data_set_clean()$id)),
+      choices = unique(unlist(data_set2()$id)),
       selected = NULL)
   })
   
@@ -289,21 +289,27 @@ function(input, output, session) {
     columns <-
       substr(colnames(high_sd()[2:(max(col(high_sd())))]), start = 1, stop = 2)
     
-    one_item_data() %>% select(id, reading, starts_with(columns))
+    one_item_data() %>% 
+      select(id, reading, starts_with(columns)) %>% 
+      group_by(id) %>% 
+      mutate(across(everything(), list(z_score = scale))) %>% 
+      select(id, reading, sort(names(.))) %>% 
+      select(!contains("reading_z_score"))
   })
   
   output$one_item_outlier <- renderTable({one_item_outlier()})
   
   output$one_item_summary <- renderPrint({
     summary({one_item_outlier() %>% select(!contains("id")) %>%  
-        select(!contains("reading"))})
-    
+        select(!contains("reading")) %>% select(!contains("z"))
+    }) 
   })
   
   output$one_item_high_sd <- renderTable({
     
     one_item_outlier()  %>% 
       select(!contains("reading")) %>% 
+      select(!contains("z_score")) %>% 
       group_by(id) %>%
       summarise(across(everything(), list(sd = sd, range = diffrange)))
     
@@ -311,11 +317,14 @@ function(input, output, session) {
   
   outlier_boxplot <- reactive({
     
+    p0 <- one_item_outlier()  %>% 
+      select(!contains("reading")) %>% 
+      select(!contains("z_score"))
+    
     p1 <- pivot_longer(one_item_outlier()[,], 
-                 cols = colnames(one_item_outlier())[2:max(col(one_item_outlier()))], 
+                 cols = colnames(p0)[2:max(col(p0))], 
                  names_to = 'Elements', 
                  values_to = 'counts')
-    p1 <- p1 %>% filter(Elements != "reading")
     plot <- ggplot(p1, aes(x = Elements, y = counts, fill = Elements)) + 
       geom_boxplot() + 
       scale_fill_viridis(discrete = TRUE, alpha=0.6) +
@@ -326,11 +335,47 @@ function(input, output, session) {
   
   output$outlier_boxplot <- renderPlot({outlier_boxplot()})
   
-  # Piloting the data
+  # Cleaned Reading Tables.
+  
+  output$reading_item <- renderUI({
+    checkboxGroupInput(
+      "reading_item", 
+      "Reading Number", 
+      choices = sort(unique(unlist(data_set2()$reading))),
+      selected = sort(unique(unlist(data_set2()$reading))),
+      inline = TRUE)
+  })
+  
+  reading_item_selected <- reactive({
+    data_set2() %>% filter(reading %in% input$reading_item)
+  })
+  
+  output$reading_item_selected <- renderTable({reading_item_selected()})
+  
+  reading_item_selected_sd <- reactive({
+    reading_item_selected() %>%
+      select(!contains("reading")) %>% 
+      group_by(id) %>%
+      summarise(across(everything(), list(mean = mean, sd = sd)))
+  })
+  
+  output$reading_item_selected_sd <- renderTable({reading_item_selected_sd()})
+  
+  reading_item_selected_minmax <- reactive({
+    reading_item_selected() %>%
+      select(!contains("reading")) %>% 
+      group_by(id) %>%
+      summarise(across(everything(), list(min = min, max = max)))
+  })
+  
+  output$reading_item_selected_minmax <- 
+    renderTable({reading_item_selected_minmax()})
+  
+  # Ploting the data
   
   data_plot <- reactive({
     data_mean <-
-      data_overview() %>%
+      reading_item_selected_sd() %>%
       pivot_longer(
         cols = (contains("mean")),
         names_to = "Type",
@@ -339,7 +384,7 @@ function(input, output, session) {
       select(id, Type, Value_mean)
     
     data_sd <-
-      data_overview() %>%
+      reading_item_selected_sd() %>%
       pivot_longer(
         cols = (contains("sd")),
         names_to = "Type",

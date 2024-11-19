@@ -30,7 +30,6 @@ fluidPage(
         accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")
       ),
       tagList(
-        tags$h1("Primary Data"),
         tags$p("<LOD values have been converted to 0"),
         tableOutput("data_set1")
       )
@@ -89,16 +88,29 @@ fluidPage(
         "Item Data",
       uiOutput("elm2"),
       tableOutput("one_item_data"),
-      tags$h2("Data Summary"),
-      
       plotOutput("boxplot")),
       nav_panel(
-        "Item Outliers",
+        "Items with high HD",
         tableOutput("one_item_outlier"),
         tableOutput("one_item_high_sd"),
         verbatimTextOutput("one_item_summary"),
         plotOutput("outlier_boxplot")
       )
+      )
+    ),
+    tabPanel(
+      "Selected Readings",
+      uiOutput("reading_item"),
+      navs_tab(
+        nav_panel(
+          "Selected Reading data",
+          tableOutput("reading_item_selected")
+        ),
+        nav_panel(
+          "Summary of Reading Data",
+          tableOutput("reading_item_selected_sd"),
+          tableOutput("reading_item_selected_minmax")
+        )
       )
     ),
     
