@@ -88,13 +88,14 @@ fluidPage(
         "Item Data",
       uiOutput("elm2"),
       tableOutput("one_item_data"),
+      #verbatimTextOutput("elm_outlier_count"),
       plotOutput("boxplot")),
       nav_panel(
-        "Items with high HD",
+        "Items with high SD",
         tableOutput("one_item_outlier"),
         tableOutput("one_item_high_sd"),
         verbatimTextOutput("one_item_summary"),
-        plotOutput("outlier_boxplot")
+        #plotOutput("outlier_boxplot")
       )
       )
     ),
