@@ -54,8 +54,8 @@ The elements shown can be selected suing check boxes.
 
 #### Items with High SD
 
-Pulls data from "Item Data" and elements with a standard deviations higher than the threshold set in "Deviations", and the table with element concentrations with their related Z scores, along with the Standard deviation, and the range between the minimum and maximum values.
-The text summary of the elements with high standard deviation is also presented along with a corresponding box plot, to help identify outliers.
+Pulls data from "Item Data" and elements with a standard deviations  and the table with element concentrations with their related Z scores, along with the Standard deviation, and the range between the minimum and maximum values.
+The text summary of the elements is also presented.
 
 ### Selected Readings
 
