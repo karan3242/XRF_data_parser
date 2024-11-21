@@ -249,12 +249,8 @@ function(input, output, session) {
   
   output$elm2 <- renderUI({
     req(one_item_data0())
-    elmt <- data_set2() %>% 
-      select(!contains("id")) %>%
-      select(!contains("reading")) %>% 
-      colnames() %>% 
-      sort()
-    
+    elmt <- sort(colnames(select(data_set2(), !contains(c("id", "reading")))))  
+      
     df1 <- one_item_data0()[3:ncol(one_item_data0())]
     
     elmt2 <- colnames(df1[,as.vector(which(round(colSums(df1),2) > 0))])
@@ -294,12 +290,16 @@ function(input, output, session) {
                         cols = colnames(df1)[2:max(col(df1))], 
                         names_to = 'Elements', 
                         values_to = 'counts')
-    plot <- ggplot(df2, aes(x = Elements, y = counts, fill = Elements)) + 
-      geom_boxplot() + 
-      scale_fill_viridis(discrete = TRUE, alpha=0.6) +
-      theme(legend.position="none")
     
-    print(plot)
+    plot <- ggplot(df2, aes(x = Elements, y = counts, fill = Elements)) + 
+      geom_boxplot(outliers = TRUE) + 
+      scale_fill_viridis(discrete = TRUE , alpha=0.6) +
+      theme(legend.position = "none") +
+      theme_minimal()
+    
+    plot2 <- plot+geom_jitter(color="red", alpha=0.9)
+    
+    if(input$jitter){print(plot2)}else{print(plot)}
   })
   
   output$one_item_data <- renderTable({one_item_data()})
@@ -328,9 +328,9 @@ function(input, output, session) {
   one_item_outlier <- reactive({
     columns <-
       substr(colnames(high_sd()[2:(max(col(high_sd())))]), start = 1, stop = 2)
-    
+    # !outliers_count
     one_item_data() %>% 
-      select(!outliers_count) %>%
+      select(id, reading, columns) %>%
       group_by(id) %>% 
       mutate(across(everything(), list(z_score = scale))) %>% 
       select(id, reading, sort(names(.))) %>% 
@@ -356,18 +356,18 @@ function(input, output, session) {
   
   outlier_boxplot <- reactive({
     
-    p0 <- one_item_outlier()  %>% 
-      select(!contains("reading")) %>% 
-      select(!contains("z_score"))
+    p0 <- select(one_item_outlier(), !contains(c("reading", "z_score"))) 
     
     p1 <- pivot_longer(one_item_outlier()[,], 
                  cols = colnames(p0)[2:max(col(p0))], 
                  names_to = 'Elements', 
                  values_to = 'counts')
+    
     plot <- ggplot(p1, aes(x = Elements, y = counts, fill = Elements)) + 
-      geom_boxplot() + 
-      scale_fill_viridis(discrete = TRUE, alpha=0.6) +
-      theme(legend.position="none")
+      geom_boxplot(aes(outlier.shape = 'triagle')) + 
+      scale_fill_viridis(discrete = TRUE) +
+      theme(legend.position="none") +
+      theme_classic()
     
     print(plot)
   })

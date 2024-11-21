@@ -89,6 +89,7 @@ fluidPage(
       uiOutput("elm2"),
       tableOutput("one_item_data"),
       #verbatimTextOutput("elm_outlier_count"),
+      checkboxInput("jitter", "Jitter"),
       plotOutput("boxplot")),
       nav_panel(
         "Items with high SD",

@@ -28,6 +28,7 @@ Selecting normalized data, normalizes all reading of selected elements to 100% a
 #### Selected Items
 
 This sub-tab provides elemental concentrations of selected elements, in either standard or normalized format.
+The values of this table influence all the following tables.
 
 #### Elements Overview
 
