@@ -42,7 +42,7 @@ Based on data from "Elements Overview", this show a table with items and element
 
 Based on data from "Selected Items", show a table with individual readings of items with elements with a z-score of each elements reading, higher than a threshold set by the slider.
 
-### Item Summary
+### Item Details
 
 Allows for parsing though multiple readings of each item individually.
 The Item of interest can be selected using the drop-down.
@@ -53,7 +53,7 @@ Pulls data from "Selected Reading" and filters in the Item selected from the dro
 It also Plots the elemental percentage of each reading as a Box plot.
 The elements shown can be selected suing check boxes.
 
-#### Items with High SD
+#### Items Summary
 
 Pulls data from "Item Data" and elements with a standard deviations  and the table with element concentrations with their related Z scores, along with the Standard deviation, and the range between the minimum and maximum values.
 The text summary of the elements is also presented.

@@ -81,23 +81,23 @@ fluidPage(
     ),
     
     tabPanel(
-      "Item Summary",
+      "Item Details",
       uiOutput("one_item"),
       navs_tab(
         nav_panel(
         "Item Data",
       uiOutput("elm2"),
-      tableOutput("one_item_data"),
+      checkboxInput("rm_outlier", "Remove Outlier"),
+      tableOutput("one_item_table"),
       #verbatimTextOutput("elm_outlier_count"),
       checkboxInput("jitter", "Jitter"),
       plotOutput("boxplot")),
       nav_panel(
-        "Items with high SD",
+        "Items Summary",
         tableOutput("one_item_outlier"),
         tableOutput("one_item_high_sd"),
-        verbatimTextOutput("one_item_summary"),
-        #plotOutput("outlier_boxplot")
-      )
+        verbatimTextOutput("one_item_summary")
+        )
       )
     ),
     tabPanel(

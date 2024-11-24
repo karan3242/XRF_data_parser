@@ -284,8 +284,34 @@ function(input, output, session) {
     
   })
   
+  one_item_data_nooutlier <- reactive({
+    data <- one_item_data()
+    elm <- colnames(select(data, !contains(c("id", "reading", "outliers_count"))))
+    is_outlier <- function(x) {
+      q1 <- quantile(x, 0.25)
+      q3 <- quantile(x, 0.75)
+      iqr <- q3 - q1
+      x < (q1 - 1.5 * iqr) | x > (q3 + 1.5 * iqr)
+    }
+    for (i in elm) {
+      data[[i]][is_outlier(data[[i]])] <- NA
+    }
+    
+    print(data)  
+    
+  })
+
+  one_item_table <- reactive({
+    if(input$rm_outlier){one_item_data_nooutlier()}
+    else{one_item_data()}
+  })
+  
+  output$one_item_table <- renderTable({one_item_table()})
+  
+  #output$one_item_data_nooutlier <- renderTable({one_item_data_nooutlier()})
+  
   one_item_box <- reactive({
-    df1 <- one_item_data() %>% select(!contains("reading")) %>% select(!outliers_count)
+    df1 <- one_item_table() %>% select(!contains(c("reading", "outliers_count")))
     df2 <- pivot_longer(df1, 
                         cols = colnames(df1)[2:max(col(df1))], 
                         names_to = 'Elements', 
@@ -301,8 +327,6 @@ function(input, output, session) {
     
     if(input$jitter){print(plot2)}else{print(plot)}
   })
-  
-  output$one_item_data <- renderTable({one_item_data()})
   
   output$elm_outlier_count <- renderText({
     is_outlier <- function(x) {
@@ -321,28 +345,26 @@ function(input, output, session) {
 
   output$boxplot <- renderPlot({one_item_box()})
   
+  ## Sinle Item SD
   
-  
-  ## Item SD
   
   one_item_outlier <- reactive({
     columns <-
       substr(colnames(high_sd()[2:(max(col(high_sd())))]), start = 1, stop = 2)
     # !outliers_count
+    
     one_item_data() %>% 
-      select(id, reading, columns) %>%
+      #select(id, reading, columns) %>%
       group_by(id) %>% 
       mutate(across(everything(), list(z_score = scale))) %>% 
       select(id, reading, sort(names(.))) %>% 
-      select(!contains("reading_z_score"))
+      select(!contains(c("reading", "outliers_count")))
   })
   
   output$one_item_outlier <- renderTable({one_item_outlier()})
   
   output$one_item_summary <- renderPrint({
-    summary({one_item_outlier() %>% select(!contains(c("id", "reading", "z"))) 
-        
-    }) 
+    summary(select(one_item_outlier(), !contains(c("id", "reading", "z_score")))) 
   })
   
   output$one_item_high_sd <- renderTable({
@@ -353,26 +375,6 @@ function(input, output, session) {
       summarise(across(everything(), list(sd = sd, range = diffrange)))
     
     })
-  
-  outlier_boxplot <- reactive({
-    
-    p0 <- select(one_item_outlier(), !contains(c("reading", "z_score"))) 
-    
-    p1 <- pivot_longer(one_item_outlier()[,], 
-                 cols = colnames(p0)[2:max(col(p0))], 
-                 names_to = 'Elements', 
-                 values_to = 'counts')
-    
-    plot <- ggplot(p1, aes(x = Elements, y = counts, fill = Elements)) + 
-      geom_boxplot(aes(outlier.shape = 'triagle')) + 
-      scale_fill_viridis(discrete = TRUE) +
-      theme(legend.position="none") +
-      theme_classic()
-    
-    print(plot)
-  })
-  
-  output$outlier_boxplot <- renderPlot({outlier_boxplot()})
   
   # Cleaned Reading Tables.
   
