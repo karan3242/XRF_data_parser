@@ -22,25 +22,25 @@ function(input, output, session) {
     inFile <- input$file1
     
     df <- read_csv(inFile$datapath) %>%
-      select(id = Lab_ID, everything()) %>%
-      arrange(id)
+      arrange(Lab_ID)
+    
+    df <- select(df, -Date, -Time, )
+    
+    reading <- c(1:max(row(df)))
+    
+    df <- cbind(df, reading)
+    
+    df <- select(df, id = Lab_ID, reading, everything())
     
     df[df == '<LOD'] <- NA
     
     df <- df %>%
-      mutate_at(
-        vars(
-          -id,-Date,-Time,-Units,-Description,-matches("Test Label"),-matches("Collimation Status"),-matches("Method Name"),-matches("Instrument Serial Num"),-matches("Reading #")
-        ),
-        as.numeric
-      )
+      mutate_at(vars(contains("Concentration")), as.numeric)
     
     df[is.na(df)] <- 0
     
     df$id <- as.character(df$id)
-    df$`Instrument Serial Num` <-
-      as.integer(df$`Instrument Serial Num`)
-    df$`Reading #` <- as.integer(df$`Reading #`)
+    df$`Instrument Serial Num` <- as.integer(df$`Instrument Serial Num`)
     df$`Test Label` <- as.integer(df$`Test Label`)
     
     df$Notes[df$Notes == 0] <- NA
@@ -87,46 +87,60 @@ function(input, output, session) {
   data_set_clean <- reactive({
     req(input$lab_id, data_set1())
     df1 <- data_set1() %>%
-      select(id , `Reading #`, starts_with(input$elm)) %>%
-      select(id, `Reading #`, contains("Concentration")) %>%
-      select(id, `Reading #`, sort(names(.))) %>%
+      select(id , `reading`, starts_with(input$elm)) %>%
+      select(id, `reading`, contains("Concentration")) %>%
+      select(id, `reading`, sort(names(.))) %>%
       filter(id %in% input$lab_id)
     
-    coln <- gsub(' Concentration', '', colnames(select(df1, contains("Concentration"))))
+    coln <- gsub(' Concentration', '', colnames(select(df1, contains(
+      "Concentration"
+    ))))
     
     colnames(df1) <- c("id", "reading", coln)
     
     print(df1)
   })
+  
   ## Nomral Data
   data_set_normal <- reactive({
     normalize_rows <- function(data) {
-      # Extracting IDs (assuming they are in the first column)
-      ids <- data[, 1]
-      readings <- data[, 2]
+      # Input validation
+      if (!is.data.frame(data))
+        stop("Input must be a data frame.")
+      if (ncol(data) < 3)
+        stop("Data must have at least 3 columns.")
       
-      # Normalizing each row to 100%
-      normalized_data <-
-        t(apply(data[, -c(1, 2), drop = FALSE], 1, function(row) {
-          row_sum <- sum(row, na.rm = TRUE)
-          
-          normalized_row <- row / row_sum * 100
-          
-          return(normalized_row)
-        }))
+      # Extracting IDs and readings
+      id <- data[[1]]       # Assuming first column is ID
+      reading <- data[[2]]  # Assuming second column is Reading
       
-      # Combining IDs with normalized data
-      normalized_data <- cbind(ids, readings, normalized_data)
+      # Normalizing rows
+      normalized_data <- t(apply(data[, -c(1, 2), drop = FALSE], 1, function(row) {
+        row_sum <- sum(row, na.rm = TRUE)
+        if (row_sum == 0) {
+          return(rep(0, length(row)))  # Handle rows that sum to 0
+        }
+        normalized_row <- round((row / row_sum * 100), digits = 2)
+        return(normalized_row)
+      }))
+      
+      # Combining results into a data frame
+      normalized_data <- data.frame(id, reading, normalized_data)
+      colnames(normalized_data) <- c(colnames(data)[1:2], colnames(data)[-c(1, 2)])
       
       return(normalized_data)
     }
     
     normalize_rows(data_set_clean())
   })
- 
+  
   # Render data set after items and elements selected
   data_set2 <- reactive({
-    if(input$normal_select == FALSE){data_set_clean()}else{data_set_normal()}
+    if (input$normal_select == FALSE) {
+      data_set_clean()
+    } else{
+      data_set_normal()
+    }
   })
   
   output$data_set2 <- renderTable({
@@ -137,7 +151,7 @@ function(input, output, session) {
   
   data_overview <- reactive({
     data_set2() %>%
-      select(!contains("reading")) %>% 
+      select(!contains("reading")) %>%
       group_by(id) %>%
       summarise(across(everything(), list(mean = mean, sd = sd)))
   })
@@ -149,7 +163,7 @@ function(input, output, session) {
   
   data_summary_minmax <- reactive({
     data_set2() %>%
-      select(!contains("reading")) %>% 
+      select(!contains("reading")) %>%
       group_by(id) %>%
       summarise(across(everything(), list(min = min, max = max)))
   })
@@ -161,13 +175,13 @@ function(input, output, session) {
   
   high_sd <- reactive({
     high_sd <- function(x) {
-        x >= input$cutoff
-      }
+      x >= input$cutoff
+    }
     
     data_overview() %>%
       filter(if_any(ends_with("sd"), high_sd)) %>%
       select(id, ends_with("sd")) %>%
-      select_if( ~ any(high_sd(.)))
+      select_if(~ any(high_sd(.)))
   })
   output$high_sd <- renderTable({
     high_sd()
@@ -212,7 +226,7 @@ function(input, output, session) {
       substr(colnames(high_sd()[2:(max(col(high_sd())))]), start = 1, stop = 2)
     
     
-    outliers <- function(x){
+    outliers <- function(x) {
       x > input$z_score | x < (input$z_score * (-1))
     }
     
@@ -235,26 +249,27 @@ function(input, output, session) {
   ## Item Data
   
   output$one_item <- renderUI({
-    selectInput(
-      "one_item", 
-      "Item", 
-      choices = unique(unlist(data_set2()$id)),
-      selected = NULL)
+    selectInput("one_item",
+                "Item",
+                choices = unique(unlist(data_set2()$id)),
+                selected = NULL)
   })
   
   one_item_data0 <- reactive({
-    data_set2() %>% 
+    data_set2() %>%
       filter(id %in% input$one_item)
   })
   
   output$elm2 <- renderUI({
     req(one_item_data0())
-    elmt <- sort(colnames(select(data_set2(), !contains(c("id", "reading")))))  
-      
+    elmt <- sort(colnames(select(data_set2(), !contains(
+      c("id", "reading")
+    ))))
+    
     df1 <- one_item_data0()[3:ncol(one_item_data0())]
     
-    elmt2 <- colnames(df1[,as.vector(which(round(colSums(df1),2) > 0))])
-
+    elmt2 <- colnames(df1[, as.vector(which(round(colSums(df1), 2) > 0))])
+    
     checkboxGroupInput(
       "elm2",
       "Select Elements",
@@ -266,7 +281,6 @@ function(input, output, session) {
   
   
   one_item_data <- reactive({
-    
     is_outlier <- function(x) {
       q1 <- quantile(x, 0.25)
       q3 <- quantile(x, 0.75)
@@ -275,10 +289,10 @@ function(input, output, session) {
     }
     df1 <- one_item_data0()
     # Apply the function to each numeric column and create a logical matrix
-    outliers_matrix <- 
+    outliers_matrix <-
       sapply(df1 [3:max(col(df1))], is_outlier)
     df1$outliers_count <- rowSums(outliers_matrix)
-    df1 %>% 
+    df1 %>%
       select(id, reading, input$elm2, outliers_count)
     
     
@@ -286,7 +300,9 @@ function(input, output, session) {
   
   one_item_data_nooutlier <- reactive({
     data <- one_item_data()
-    elm <- colnames(select(data, !contains(c("id", "reading", "outliers_count"))))
+    elm <- colnames(select(data, !contains(c(
+      "id", "reading", "outliers_count"
+    ))))
     is_outlier <- function(x) {
       q1 <- quantile(x, 0.25)
       q3 <- quantile(x, 0.75)
@@ -297,35 +313,54 @@ function(input, output, session) {
       data[[i]][is_outlier(data[[i]])] <- NA
     }
     
-    print(data)  
+    print(data)
     
   })
-
+  
   one_item_table <- reactive({
-    if(input$rm_outlier){one_item_data_nooutlier()}
-    else{one_item_data()}
+    if (input$rm_outlier) {
+      one_item_data_nooutlier()
+    }
+    else{
+      one_item_data()
+    }
   })
   
-  output$one_item_table <- renderTable({one_item_table()})
+  output$one_item_table <- renderTable({
+    one_item_table()
+  })
   
   #output$one_item_data_nooutlier <- renderTable({one_item_data_nooutlier()})
   
   one_item_box <- reactive({
     df1 <- one_item_table() %>% select(!contains(c("reading", "outliers_count")))
-    df2 <- pivot_longer(df1, 
-                        cols = colnames(df1)[2:max(col(df1))], 
-                        names_to = 'Elements', 
-                        values_to = 'counts')
+    df2 <- pivot_longer(
+      df1,
+      cols = colnames(df1)[2:max(col(df1))],
+      names_to = 'Elements',
+      values_to = 'counts'
+    )
     
-    plot <- ggplot(df2, aes(x = Elements, y = counts, fill = Elements)) + 
-      geom_boxplot(outliers = TRUE) + 
-      scale_fill_viridis(discrete = TRUE , alpha=0.6) +
-      theme(legend.position = "none") +
-      theme_minimal()
+    plot <- ggplot(df2, aes(x = Elements, y = counts, fill = Elements)) +
+      geom_boxplot(outliers = TRUE) +
+      scale_fill_viridis(discrete = TRUE , alpha = 0.6) +
+      theme_minimal() +
+      theme(legend.position = "none")
+      
     
-    plot2 <- plot+geom_jitter(color="red", alpha=0.9)
+    plot2 <- ggplot(df2, aes(x = Elements, y = counts, fill = Elements)) +
+      geom_boxplot(outliers = FALSE) +
+      geom_jitter(color = "red", alpha = 0.9) +
+      scale_fill_viridis(discrete = TRUE , alpha = 0.6) +
+      theme_minimal() +
+      theme(legend.position = "none")
+      
     
-    if(input$jitter){print(plot2)}else{print(plot)}
+    if (input$jitter) {
+      print(plot2)
+    } else{
+      print(plot)
+    }
   })
   
   output$elm_outlier_count <- renderText({
@@ -337,13 +372,15 @@ function(input, output, session) {
     }
     df1 <- one_item_data()
     # Apply the function to each numeric column and create a logical matrix
-    outliers_matrix <- 
+    outliers_matrix <-
       sapply(df1 [3:max(col(df1))], is_outlier)
     
     colSums(outliers_matrix)
   })
-
-  output$boxplot <- renderPlot({one_item_box()})
+  
+  output$boxplot <- renderPlot({
+    one_item_box()
+  })
   
   ## Sinle Item SD
   
@@ -353,78 +390,94 @@ function(input, output, session) {
       substr(colnames(high_sd()[2:(max(col(high_sd())))]), start = 1, stop = 2)
     # !outliers_count
     
-    one_item_data() %>% 
+    one_item_data() %>%
       #select(id, reading, columns) %>%
-      group_by(id) %>% 
-      mutate(across(everything(), list(z_score = scale))) %>% 
-      select(id, reading, sort(names(.))) %>% 
+      group_by(id) %>%
+      mutate(across(everything(), list(z_score = scale))) %>%
+      select(id, reading, sort(names(.))) %>%
       select(!contains(c("reading", "outliers_count")))
   })
   
-  output$one_item_outlier <- renderTable({one_item_outlier()})
+  output$one_item_outlier <- renderTable({
+    one_item_outlier()
+  })
   
   output$one_item_summary <- renderPrint({
-    summary(select(one_item_outlier(), !contains(c("id", "reading", "z_score")))) 
+    summary(select(one_item_outlier(), !contains(c(
+      "id", "reading", "z_score"
+    ))))
   })
   
   output$one_item_high_sd <- renderTable({
-    
-    one_item_outlier()  %>% 
-      select(!contains(c("reading", "z_score"))) %>% 
+    one_item_outlier()  %>%
+      select(!contains(c("reading", "z_score"))) %>%
       group_by(id) %>%
       summarise(across(everything(), list(sd = sd, range = diffrange)))
     
-    })
+  })
   
   # Cleaned Reading Tables.
   
   output$reading_item <- renderUI({
     checkboxGroupInput(
-      "reading_item", 
-      "Reading Number", 
-      choices = sort(unique(unlist(data_set2()$reading))),
-      selected = sort(unique(unlist(data_set2()$reading))),
-      inline = TRUE)
+      "reading_item",
+      "Reading Number",
+      choices = sort(unique(unlist(
+        data_set2()$reading
+      ))),
+      selected = sort(unique(unlist(
+        data_set2()$reading
+      ))),
+      inline = TRUE
+    )
   })
   
   reading_item_selected <- reactive({
     data_set2() %>% filter(reading %in% input$reading_item)
   })
   
-  output$reading_item_selected <- renderTable({reading_item_selected()})
+  output$reading_item_selected <- renderTable({
+    reading_item_selected()
+  })
   
   reading_item_selected_sd <- reactive({
     reading_item_selected() %>%
-      select(!contains("reading")) %>% 
+      select(!contains("reading")) %>%
       group_by(id) %>%
       summarise(across(everything(), list(mean = mean, sd = sd)))
   })
   
-  output$reading_item_selected_sd <- renderTable({reading_item_selected_sd()})
+  output$reading_item_selected_sd <- renderTable({
+    reading_item_selected_sd()
+  })
   
   reading_item_selected_minmax <- reactive({
     reading_item_selected() %>%
-      select(!contains("reading")) %>% 
+      select(!contains("reading")) %>%
       group_by(id) %>%
       summarise(across(everything(), list(min = min, max = max)))
   })
   
-  output$reading_item_selected_minmax <- 
-    renderTable({reading_item_selected_minmax()})
+  output$reading_item_selected_minmax <-
+    renderTable({
+      reading_item_selected_minmax()
+    })
   
   # Ploting the data
   
   data_plot <- reactive({
-    
     dfx <- reading_item_selected_minmax()
     df_max <- select(dfx, c("id", contains("_max")))
-    colnames(df_max) <- c("id", gsub('_max', '', colnames(select(df_max, contains("max")))))
+    colnames(df_max) <- c("id", gsub('_max', '', colnames(select(
+      df_max, contains("max")
+    ))))
     
-    no_0 <- colnames(select(df_max[,as.vector(which(colSums(df_max[2:ncol(df_max)]) >0))],!id))
+    no_0 <- colnames(select(df_max[, as.vector(which(colSums(df_max[2:ncol(df_max)]) >
+                                                       0))], !id))
     
-     
     
-    plot_data <- reading_item_selected_sd() %>% select(id, starts_with(no_0)) 
+    
+    plot_data <- reading_item_selected_sd() %>% select(id, starts_with(no_0))
     
     data_mean <-
       plot_data %>%
