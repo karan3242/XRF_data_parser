@@ -94,9 +94,10 @@ fluidPage(
       plotOutput("boxplot")),
       nav_panel(
         "Items Summary",
-        tableOutput("one_item_outlier"),
-        tableOutput("one_item_high_sd"),
-        verbatimTextOutput("one_item_summary")
+        tableOutput("one_item_summary")
+        #tableOutput("one_item_outlier"),
+        #tableOutput("one_item_high_sd"),
+        #verbatimTextOutput("one_item_summary")
         )
       )
     ),
@@ -122,6 +123,42 @@ fluidPage(
       # tags$h1("Plot"),
       plotlyOutput("plot"),
       downloadButton('dl', "Download the data"),
+      downloadButton("report","Generate report"),
+    ),
+    
+    # Beam Spectra
+    tabPanel(
+      "Beam Spectra",
+      sidebarPanel(
+        fileInput(
+          "fileb",
+          "Choose CSV File",
+          accept = c("text/csv",
+                     "text/comma-separated-values,text/plain",
+                     ".csv")
+        ),
+        uiOutput("readings"),
+        uiOutput("xaxis"),
+        uiOutput("yaxis"),
+        textInput("title", "Plot Title", "Item", placeholder = "Item"),
+        tags$div(
+          style = "display: flex; flex-direction: column;",
+          tags$div(
+            style = "display: flex; flex-direction: row;",
+            textInput("dpi", "Select dpi:", 250, placeholder = "250"),
+            textInput("pwidth", "Select Width:", 1920, placeholder = "1920"),
+            textInput("pheight", "Select Height:", 1440, placeholder = "1440")
+          ),
+          tags$div(
+            style = "display: flex; flex-direction: row;",
+            textInput("dstpath", "Select Destination Folder:", "~/Pictures", placeholder = "~/Pictures"),
+            textInput("dstplot", "Select File name:", "plot", placeholder = "plot"),
+            actionButton("savePlot", "Save Plot")
+          )
+        )
+        
+      ),
+      mainPanel(plotOutput("beam_plot", height = 700))
     ),
     
     # About Page

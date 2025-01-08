@@ -14,8 +14,11 @@ library(viridis)
 library(plotly)
 library(writexl)
 library(CC)
+library(knitr)
 
 function(input, output, session) {
+  
+##### Primary data #####
   # Base data set with pre-processing
   
   data_set1 <- reactive({
@@ -82,6 +85,7 @@ function(input, output, session) {
     )
   })
   
+##### Cleaned Data #####
   # Cleaned And Normalized Data
   ## Clean data
   data_set_clean <- reactive({
@@ -244,9 +248,9 @@ function(input, output, session) {
     high_sd_data()
   })
   
-  # Individual Item summary
+
   
-  ## Item Data
+##### Item Wise Data #####
   
   output$one_item <- renderUI({
     selectInput("one_item",
@@ -398,23 +402,58 @@ function(input, output, session) {
       select(!contains(c("reading", "outliers_count")))
   })
   
-  output$one_item_outlier <- renderTable({
-    one_item_outlier()
+  # Test
+  
+  one_item_summary <- reactive({
+    table_data <- one_item_data0()
+    
+    # Pivot the data so rows for `reading` become columns
+    wider_table <- pivot_longer(
+      table_data,
+      cols = -c(id, reading),   # Keep `id` and `reading` intact
+      names_to = "element",     # Column for variable names
+      values_to = "value"       # Column for values
+    ) %>%
+      pivot_wider(
+        names_from = reading,   # Use `reading` as new column names
+        values_from = value     # Fill the new columns with values
+      )
+    
+    std <- apply(wider_table[, -c(1,2)], 1, sd)
+    avg <- apply(wider_table[, -c(1,2)], 1, mean)
+    sum <- apply(wider_table[, -c(1,2)], 1, sum)
+    range <- apply(wider_table[, -c(1,2)], 1, diffrange)
+    
+    df <- cbind(wider_table, std, avg, range, sum)
+    df <- filter(df, sum != 0)
+    df <- select(df, -id, -sum)
+    
+    df
   })
   
-  output$one_item_summary <- renderPrint({
-    summary(select(one_item_outlier(), !contains(c(
-      "id", "reading", "z_score"
-    ))))
-  })
-  
-  output$one_item_high_sd <- renderTable({
-    one_item_outlier()  %>%
-      select(!contains(c("reading", "z_score"))) %>%
-      group_by(id) %>%
-      summarise(across(everything(), list(sd = sd, range = diffrange)))
+  output$one_item_summary <- renderTable({
+    
+    one_item_summary()
     
   })
+  
+  # output$one_item_outlier <- renderTable({
+  #   one_item_outlier()
+  # })
+  # 
+  # output$one_item_summary <- renderPrint({
+  #   summary(select(one_item_outlier(), !contains(c(
+  #     "id", "reading", "z_score"
+  #   ))))
+  # })
+  # 
+  # output$one_item_high_sd <- renderTable({
+  #   one_item_outlier()  %>%
+  #     select(!contains(c("reading", "z_score"))) %>%
+  #     group_by(id) %>%
+  #     summarise(across(everything(), list(sd = sd, range = diffrange)))
+  #   
+  # })
   
   # Cleaned Reading Tables.
   
@@ -463,7 +502,9 @@ function(input, output, session) {
       reading_item_selected_minmax()
     })
   
-  # Ploting the data
+
+  
+##### Plotting and Saving #####
   
   data_plot <- reactive({
     dfx <- reading_item_selected_minmax()
@@ -533,7 +574,7 @@ function(input, output, session) {
     data_plot()
   })
   
-  
+  # Download Handel
   output$dl <- downloadHandler(
     filename = function() {
       paste0("df_dmodel", "_Table", ".xlsx")
@@ -551,6 +592,119 @@ function(input, output, session) {
       writexl::write_xlsx(sheets, path = file) # saving the file
     }
   )
+  
+  ##### Report #####
+  
+  output$report <- downloadHandler(
+    
+    filename = function() {
+      "report.html"  # File name for the downloaded file
+    },
+    
+    content = function(file) {
+      # Create a temporary file path for the RMarkdown report
+      tempReport <- file.path(tempdir(), "report.Rmd")
+      
+      # Copy the RMarkdown file to the temporary directory
+      file.copy("/home/kd/PARA/Resources/R_scripts/r_xrf_data_cleanup/xrf_parser/report.Rmd", 
+                tempReport, 
+                overwrite = TRUE)
+      
+      # Define the parameters for the RMarkdown report
+      params <- list(choice = data_set2())
+      
+      # Render the RMarkdown report to the specified output file
+      rmarkdown::render(
+        input = tempReport,
+        output_file = file,
+        params = params,
+        envir = new.env(parent = globalenv())
+      )
+    }
+  )
+  
+###### Beam spectra #####
+
+  beam1 <- reactive({
+    inFile <- input$fileb
+    df1 <- read_csv(inFile$datapath) %>% slice(2, 4, 40:2086) %>% select(-1)
+    df1 <- df1[ , colSums(is.na(df1)) == 0] #remove Na colums
+  })
+  #output$beam1 <- renderTable({beam1()})
+  
+  output$readings <- renderUI({
+    selectInput(
+      "reading", 
+      "Reading", 
+      choices = unique(unlist(beam1()[1, ])),
+      selected = NULL)
+    
+  })
+  
+  df3 <- reactive({
+    df2 <- as.vector(beam1()[1, ] == input$reading)
+    df3 <- as.data.frame(beam1()[,df2]) %>% slice(2:max(row(beam1())))
+    names(df3) <- df3[1,]
+    df3 <- df3 %>% slice(2:max(row(beam1())))
+    
+    kev <- seq(0.02 , by = 0.02, length.out = max(row(df3)))
+    
+    df3$kev <- kev
+    df3 <- mutate_all(df3, as.double)
+  })
+  #output$df3 <-renderTable({df3()})
+  
+  output$xaxis <- renderUI({
+    xmax <- max(df3()$kev)
+    sliderInput("xaxis", "X-axis", 0, xmax, value = c(0,10))
+  })
+  
+  output$yaxis <- renderUI({
+    lim <- max(max(df3()[,1]),max(df3()[,2]))
+    sliderInput("yaxis", "Y-axis", 0, lim, value = lim)
+  })
+  
+  
+  plot1 <- reactive({ggplot(df3(), aes(x=kev)) +
+      geom_area(aes(y=`2`, fill ='Exposer 2')) +
+      geom_area(aes(y = `1`, fill = 'Exposer 1'))+
+      scale_fill_manual(values = c("#CD6C53", "#839FBA"), 
+                        labels = c("Exposer 1", "Exposer 2")) +
+      coord_cartesian(xlim= c(input$xaxis[1], input$xaxis[2]), ylim = c(0, input$yaxis)) +
+      scale_y_continuous(expand = expansion(mult = 0)) +
+      theme_light() +
+      labs(y = "Counts/s", x = "KeV") +
+      theme(legend.position = "bottom",
+            #legend.justification = c("left", "top"),
+            legend.title = element_blank(),
+            legend.background = element_rect(size = 1,
+                                             color = "grey",
+            ),
+            axis.title = element_text(face="bold")) +
+      labs(title = input$title, col = 'variable')
+    
+  })
+  
+  
+  
+  output$beam_plot <- renderPlot({plot1()
+    
+    # plot2 <- plot1 + 
+    #   geom_area(aes(y=`3`, fill = 'Exposer 3'))
+    
+  })
+  
+  #Save plot to file
+  observeEvent(input$savePlot, {
+    ggsave(
+      filename = file.path(input$dstpath, paste0(input$dstplot,"_", input$title, ".png")),
+      plot = plot1(),
+      width = as.integer(input$pwidth),
+      height = as.integer(input$pheight),
+      units = "px",
+      dpi = as.integer(input$dpi)
+    )
+  })
   
   
 }

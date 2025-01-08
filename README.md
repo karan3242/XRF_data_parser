@@ -83,6 +83,8 @@ This is a simple plotting functions for XRF beam spectra data. This only works w
 The drop-down menu is used for selecting the reading number. Use the sliders to set X and Y axis limits and use other options to shave the image.
 The association of the reading number with the Lab id needs to be done manually. I am working on a program that will do that automatically in the future.
 
+Note that the Readings in the Beam spectra refer to the `Reading #` and `Test Lable`. they do not refer to the `reading` column.
+
 ----
 
 This tool streamlines the analysis process for XRF data sets, offering flexible filtering options and insightful visualizations.
