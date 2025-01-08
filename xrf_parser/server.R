@@ -488,7 +488,7 @@ function(input, output, session) {
     content = function(file) {
       tbl1_primary <- data_set1()
       tbl2_total <- data_set2()
-      tbl3_clean <- reading_item_selected()
+      tbl3_no_outlier <- reading_item_selected()
       tbl4_sd <- reading_item_selected_sd()
       tbl5_minmax <- reading_item_selected_minmax()
       
