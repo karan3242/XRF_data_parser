@@ -598,7 +598,7 @@ function(input, output, session) {
   output$report <- downloadHandler(
     
     filename = function() {
-      "report.html"  # File name for the downloaded file
+      "report.pdf"  # File name for the downloaded file
     },
     
     content = function(file) {
