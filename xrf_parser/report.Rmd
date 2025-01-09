@@ -50,6 +50,7 @@ for (i in items) {
     mutate(
       std = round(apply(select(., -c(id, element)), 1, sd, na.rm = TRUE),2),
       avg = round(apply(select(., -c(id, element)), 1, mean, na.rm = TRUE),2),
+      median = apply(select(., -c(id, element)), 1, median, na.rm = TRUE),
       sum = apply(select(., -c(id, element)), 1, sum, na.rm = TRUE),
       range = round(apply(select(., -c(id, element)), 1, function(x) diff(range(x, na.rm = TRUE))),2)
     ) %>%
@@ -59,8 +60,7 @@ for (i in items) {
   # Print the summary table
   print(kable(wider_table))
   
-    
-  tryCatch({
+
     
   # Reshape `one_item_data0` to long format for plotting
   df2 <- one_item_data0 %>%
@@ -86,9 +86,6 @@ for (i in items) {
   # Print the plot
   print(plot)
   
-  }error = function(e) {
-  cat("Box plot skipped due to an error:\n", e$message, "\n")
-})
   
   cat("\n")
   

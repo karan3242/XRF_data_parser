@@ -421,10 +421,11 @@ function(input, output, session) {
     
     std <- apply(wider_table[, -c(1,2)], 1, sd)
     avg <- apply(wider_table[, -c(1,2)], 1, mean)
+    median <- apply(wider_table[, -c(1,2)], 1, median)
     sum <- apply(wider_table[, -c(1,2)], 1, sum)
     range <- apply(wider_table[, -c(1,2)], 1, diffrange)
     
-    df <- cbind(wider_table, std, avg, range, sum)
+    df <- cbind(wider_table, std, avg, median, range, sum)
     df <- filter(df, sum != 0)
     df <- select(df, -id, -sum)
     
