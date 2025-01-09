@@ -516,8 +516,6 @@ function(input, output, session) {
     no_0 <- colnames(select(df_max[, as.vector(which(colSums(df_max[2:ncol(df_max)]) >
                                                        0))], !id))
     
-    
-    
     plot_data <- reading_item_selected_sd() %>% select(id, starts_with(no_0))
     
     data_mean <-
@@ -611,7 +609,10 @@ function(input, output, session) {
                 overwrite = TRUE)
       
       # Define the parameters for the RMarkdown report
-      params <- list(choice = data_set2())
+      params <- list(choice = reading_item_selected(),
+                     norm = input$normal_select)
+      
+      # alt data data_set2()
       
       # Render the RMarkdown report to the specified output file
       rmarkdown::render(

@@ -4,21 +4,28 @@ date: "`r Sys.Date()`"
 output: pdf_document
 params:
   choice: NULL
+  norm: FALSE
 ---
+```{r echo=FALSE}
 
-# Sample Wise data
-
-The is of each sample.
-
-```{r echo=FALSE, results='asis'}
 library(tidyverse)
 library(knitr)
 library(viridis)
 
+cutoff <- 9
 data <- params$choice
 
 # Get unique items from the `id` column
 items <- sort(unique(unlist(data$id)))
+
+```
+
+
+# Sample Wise data
+
+Normalization of this data is `r params$norm`.
+
+```{r echo=FALSE, results='asis'}
 
 for (i in items) {
   cat("\n##", i, "\n")
@@ -101,7 +108,7 @@ fe_con <- NA
 if (cu > max(fe, pb, ag)) {
   if (sn >= 1) {
     el <- "Bronze"
-    tinq <- if (cu/sn < 9) {
+    tinq <- if (cu/sn < cutoff) {
       paste("Cu/Sn ratio =", round(cu/sn, 2), "(High Tin content)")
     } else {
       paste("Cu/Sn ratio =", round(cu/sn, 2), "(Low Tin content)")
@@ -128,7 +135,7 @@ if (fe < max(cu, pb, sn, ag) && fe > 0.5) {
 }
 
 # Print results
-cat("\nElement:", el, "\n")
+cat("\nType:", el, "\n")
 if (!is.na(tinq)) cat(tinq, "\n")
 if (!is.na(pb_con)) cat(pb_con, "\n")
 if (!is.na(fe_con)) cat(fe_con, "\n")
@@ -148,11 +155,11 @@ if (!exists("df_summary")) {
 df_summary <- rbind(
   df_summary,
   data.frame(
-    iteration = i,
+    id = i,
     element = el,
-    tin_quality = ifelse(is.na(tinq), "", tinq),
-    lead_content = ifelse(is.na(pb_con), "", pb_con),
-    iron_content = ifelse(is.na(fe_con), "", fe_con),
+    Sn_quantity = ifelse(is.na(tinq), "", tinq),
+    Pb_content = ifelse(is.na(pb_con), "", pb_con),
+    Fe_content = ifelse(is.na(fe_con), "", fe_con),
     stringsAsFactors = FALSE
   )
 )
@@ -162,10 +169,10 @@ df_summary <- rbind(
 
 # Over View of Tallied Data
 
-```{r echo=FALSE}
-
-df_summary <- as_tibble(df_summary)
+```{r echo=FALSE, results='asis'}
 
 print(kable(df_summary))
 
 ```
+
+The cutoff value for high and low tin content is `r cutoff`.
