@@ -59,6 +59,9 @@ for (i in items) {
   # Print the summary table
   print(kable(wider_table))
   
+    
+  tryCatch({
+    
   # Reshape `one_item_data0` to long format for plotting
   df2 <- one_item_data0 %>%
     pivot_longer(
@@ -67,7 +70,8 @@ for (i in items) {
       values_to = 'counts'      # New column for values
     ) %>%
     filter(counts != 0, Elements != "reading") # Remove unnecessary rows
-  
+
+
   # Generate the plot
   plot <- ggplot(df2, aes(
     x = Elements, 
@@ -82,7 +86,11 @@ for (i in items) {
   # Print the plot
   print(plot)
   
-  cat("\n", "\n")
+  }error = function(e) {
+  cat("Box plot skipped due to an error:\n", e$message, "\n")
+})
+  
+  cat("\n")
   
 # Extract values from the table and handle NA
 cu <- as.numeric(filter(wider_table, element == "Cu")[,6])
