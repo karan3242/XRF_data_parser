@@ -5,14 +5,14 @@
 # Requirements
 
 -   OLYMPUS VANTA pXRF device
--   GeoChem export method
+-   Geo Chem export method
 
-Ensure the CSV export follows the GeoChem format with Item notes labeled as `LAB_ID`. The ID should contain both letters and numbers for string value compatibility.
+Ensure the CSV export follows the Geo Chem format with Item notes labeled as `LAB_ID`. The ID should contain both letters and numbers for string value compatibility.
 
 # XRF Chemistry Analyser
 ## Features
 
-This tool is tailored to parse XRF databases exported in the GeoChem format from the OLYMPUS VANTA pXRF. It selectively retains element composition and item IDs for analysis.
+This tool is tailored to parse XRF databases exported in the Geo Chem format from the OLYMPUS VANTA pXRF. It selectively retains element composition and item IDs for analysis.
 
 The following are the functions of each Tab and sub Tab and the sequence of data parsing.
 
@@ -36,7 +36,7 @@ Based on the data seen in the "Selected Items" tab, shows the mean, standard dev
 
 #### Deviations
 
-Based on data from "Elements Overview", this show a table with items and elements with standard divinations higher than a threshold set by the slider.
+Based on data from "Elements Overview", this show a table with items and elements with standard divination higher than a threshold set by the slider.
 
 #### Z-Score
 
@@ -76,6 +76,8 @@ Pulls from the table "Selected Reading data", and gives summary in the form of m
 Generates grouped bar plots depicting averages and standard deviation errors for each selected element and item based on "Summary of Reading data".
 
 It also enables the download of tables of "Primary Data", "Selected Items", "Selected Readings" and "Summary of Reading data", as worksheets in a Excel file.
+
+The Generate Report Button creates a item wise report PDF document, with the summary data and box plot of each item and an Item classification table.
 
 # Beam Spectra Plotter
 
