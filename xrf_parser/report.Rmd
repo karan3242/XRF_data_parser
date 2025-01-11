@@ -80,6 +80,7 @@ for (i in items) {
   )) +
     geom_boxplot(outlier.shape = NA) +   # Boxplot without displaying outliers explicitly
     scale_fill_viridis(discrete = TRUE, alpha = 0.6) +
+    ylab("wt%") +
     theme_minimal() +
     theme(legend.position = "none")
   
@@ -90,11 +91,11 @@ for (i in items) {
   cat("\n")
   
 # Extract values from the table and handle NA
-cu <- as.numeric(filter(wider_table, element == "Cu")[,6])
-sn <- as.numeric(filter(wider_table, element == "Sn")[,6])
-pb <- as.numeric(filter(wider_table, element == "Pb")[,6])
-fe <- as.numeric(filter(wider_table, element == "Fe")[,6])
-ag <- as.numeric(filter(wider_table, element == "Ag")[,6])
+cu <- as.numeric(select(filter(wider_table, element == "Cu"), avg))
+sn <- as.numeric(select(filter(wider_table, element == "Sn"), avg))
+pb <- as.numeric(select(filter(wider_table, element == "Pb"), avg))
+fe <- as.numeric(select(filter(wider_table, element == "Fe"), avg))
+ag <- as.numeric(select(filter(wider_table, element == "Ag"), avg))
 
 # Replace NA values with 0
 cu <- ifelse(is.na(cu), 0, cu)
@@ -114,9 +115,9 @@ if (cu > max(fe, pb, ag)) {
   if (sn >= 1) {
     el <- "Bronze"
     tinq <- if (cu/sn < cutoff) {
-      paste("Cu/Sn ratio =", round(cu/sn, 2), "(High Tin content)")
+      paste(round(cu/sn, 2), "(High Tin content)")
     } else {
-      paste("Cu/Sn ratio =", round(cu/sn, 2), "(Low Tin content)")
+      paste(round(cu/sn, 2), "(Low Tin content)")
     }
   } else {
     el <- "Copper"
@@ -141,18 +142,18 @@ if (fe < max(cu, pb, sn, ag) && fe > 0.5) {
 
 # Print results
 cat("\nType:", el, "\n")
-if (!is.na(tinq)) cat(tinq, "\n")
+if (!is.na(tinq)) cat("Cu/Sn ratio",tinq, "\n")
 if (!is.na(pb_con)) cat(pb_con, "\n")
 if (!is.na(fe_con)) cat(fe_con, "\n")
 
 # Create or append to the summary data frame
 if (!exists("df_summary")) {
   df_summary <- data.frame(
-    iteration = numeric(0),
+    id = numeric(0),
     element = character(0),
-    tin_quality = character(0),
-    lead_content = character(0),
-    iron_content = character(0),
+    Bronze_ratio = character(0),
+    Pb_content = character(0),
+    Fe_content = character(0),
     stringsAsFactors = FALSE
   )
 }
@@ -162,9 +163,9 @@ df_summary <- rbind(
   data.frame(
     id = i,
     element = el,
-    Sn_quantity = ifelse(is.na(tinq), "", tinq),
-    Pb_content = ifelse(is.na(pb_con), "", pb_con),
-    Fe_content = ifelse(is.na(fe_con), "", fe_con),
+    Bronze_ratio = ifelse(is.na(tinq), "", tinq),
+    Pb_content = ifelse(is.na(pb_con), "", paste(round(pb, 2),"%")),
+    Fe_content = ifelse(is.na(fe_con), "", paste(round(fe, 2),"%")),
     stringsAsFactors = FALSE
   )
 )
