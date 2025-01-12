@@ -154,10 +154,11 @@ function(input, output, session) {
   # Mean and SD of clean Data
   
   data_overview <- reactive({
+    skewness <- function(x) {abs(mean(x, na.rm = TRUE) - median(x, na.rm = TRUE))}
     data_set2() %>%
       select(!contains("reading")) %>%
       group_by(id) %>%
-      summarise(across(everything(), list(sd = sd, range = diffrange)))
+      summarise(across(everything(), list(sd = sd, skew = ~skewness(.x))))
   })
   output$data_overview <- renderTable({
     data_overview()
@@ -169,7 +170,7 @@ function(input, output, session) {
     data_set2() %>%
       select(!contains("reading")) %>%
       group_by(id) %>%
-      summarise(across(everything(), list(mean = mean, median = median)))
+      summarise(across(everything(), list(mean = mean, median = median, range = diffrange)))
   })
   output$data_summary_minmax <- renderTable({
     data_summary_minmax()
@@ -181,9 +182,13 @@ function(input, output, session) {
     high_sd <- function(x) {
       x >= input$cutoff
     }
+  skew_abs <- function(x) {
+    x >= input$skew_cut
+  }
     
     data_overview() %>%
       filter(if_any(ends_with("sd"), high_sd)) %>%
+      filter(if_any(ends_with("skew"), skew_abs)) %>% 
       select(id, ends_with("sd")) %>%
       select_if(~ any(high_sd(.)))
   })
@@ -601,21 +606,24 @@ function(input, output, session) {
       
       # Initialize variables for results
       el <- ""
-      tinq <- NA
       cutoff <- 9
+      br <- NA
+      tin_val <- NA
       
       # Main logic
       if (cu > max(fe, pb, ag)) {
         if (sn >= 1) {
           el <- "Bronze"
-          tinq <- if (cu/sn < cutoff) {
+          if (cu/sn < cutoff) {
+            if (cu/sn < 1) {
+              br <- round(cu/sn, 2)
+              tin_val <- "(Mostly Tin)"
+            }
             br <- round(cu/sn, 2)
             tin_val <- "(High Tin content)"
-            paste(br, tin_val)
           } else {
             br <- round(cu/sn, 2)
             tin_val <- "(Low Tin content)"
-            paste(br, tin_val)
           }
         } else {
           el <- "Copper"
@@ -657,8 +665,8 @@ function(input, output, session) {
             Sn_content = ifelse(is.na(sn), 0, sn),
             Pb_content = ifelse(is.na(pb), 0, pb),
             Fe_content = ifelse(is.na(fe), 0, fe),
-            Bronze_ratio = ifelse(is.na(br),NA, br),
-            Bronze_quant = ifelse(is.na(tin_val), "", tin_val),
+            Bronze_ratio = ifelse(is.na(br) & el !="Bronze",NA, br),
+            Bronze_quant = ifelse(is.na(tin_val) & el !="Bronze", "", tin_val),
             stringsAsFactors = FALSE
           )
         )

@@ -56,10 +56,19 @@ fluidPage(
             min = 0,
             max = 10,
             value = 3,
-            step = 0.01,
+            step = 0.1,
             ticks = FALSE
           ),
-          tags$h2("Mean and Standard Deviation"),
+          sliderInput(
+            "skew_cut",
+            "Deviation Percentage Cutoff",
+            min = 0,
+            max = 5,
+            value = 1,
+            step = 0.1,
+            ticks = FALSE
+          ),
+          tags$h2("Sd and Skew"),
           tableOutput("high_sd_overview"),
           tags$h2("Range"),
           tableOutput("data_minmax_highsd")
@@ -118,7 +127,7 @@ fluidPage(
     
     # Plot tab
     tabPanel(
-      "Plot",
+      "Item Summary",
       # tags$h1("Plot"),
       plotlyOutput("plot"),
       tableOutput("item_type_summary"),
