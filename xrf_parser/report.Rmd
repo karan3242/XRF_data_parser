@@ -20,6 +20,9 @@ items <- sort(unique(unlist(data$id)))
 
 ```
 
+**XRF**:    Olympus Vanta M Serise
+**Anode**: Silver (Ag)
+**Method**: N/A
 
 # Sample Wise data
 
