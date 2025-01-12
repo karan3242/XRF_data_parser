@@ -112,7 +112,6 @@ fluidPage(
         nav_panel(
           "Summary of Reading Data",
           tableOutput("reading_item_selected_sd"),
-          tableOutput("reading_item_selected_minmax")
         )
       )
     ),
@@ -122,6 +121,7 @@ fluidPage(
       "Plot",
       # tags$h1("Plot"),
       plotlyOutput("plot"),
+      tableOutput("item_type_summary"),
       downloadButton('dl', "Download the data"),
       downloadButton("report","Generate report"),
     ),

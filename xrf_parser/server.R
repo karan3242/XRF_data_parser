@@ -157,7 +157,7 @@ function(input, output, session) {
     data_set2() %>%
       select(!contains("reading")) %>%
       group_by(id) %>%
-      summarise(across(everything(), list(mean = mean, sd = sd)))
+      summarise(across(everything(), list(sd = sd, range = diffrange)))
   })
   output$data_overview <- renderTable({
     data_overview()
@@ -169,7 +169,7 @@ function(input, output, session) {
     data_set2() %>%
       select(!contains("reading")) %>%
       group_by(id) %>%
-      summarise(across(everything(), list(min = min, max = max)))
+      summarise(across(everything(), list(mean = mean, median = median)))
   })
   output$data_summary_minmax <- renderTable({
     data_summary_minmax()
@@ -484,7 +484,9 @@ function(input, output, session) {
     reading_item_selected() %>%
       select(!contains("reading")) %>%
       group_by(id) %>%
-      summarise(across(everything(), list(mean = mean, sd = sd)))
+      summarise(across(everything(), 
+                       list(sd = sd, mean = mean, median = median,range = diffrange)
+                       ))
   })
   
   output$reading_item_selected_sd <- renderTable({
@@ -573,6 +575,105 @@ function(input, output, session) {
     data_plot()
   })
   
+  ##### Item Type Breakdown ######
+  
+  item_type_summary <- reactive({
+    data <- reading_item_selected_sd() %>% select(id, contains("mean"))
+    
+    ids <- data$id
+    
+    
+    for (i in ids){
+      # Set Element Variables
+      cu <- filter(data, id == i) %>% select(contains("Cu")) %>% as.double()
+      sn <- filter(data, id == i) %>% select(contains("Sn")) %>% as.double()
+      pb <- filter(data, id == i) %>% select(contains("Pb")) %>% as.double()
+      fe <- filter(data, id == i) %>% select(contains("Fe")) %>% as.double()
+      ag <- filter(data, id == i) %>% select(contains("Ag")) %>% as.double()
+      
+      
+      # Replace NA values with 0
+      cu <- ifelse(is.na(cu), 0, cu)
+      sn <- ifelse(is.na(sn), 0, sn)
+      pb <- ifelse(is.na(pb), 0, pb)
+      fe <- ifelse(is.na(fe), 0, fe)
+      ag <- ifelse(is.na(ag), 0, ag)
+      
+      # Initialize variables for results
+      el <- ""
+      tinq <- NA
+      cutoff <- 9
+      
+      # Main logic
+      if (cu > max(fe, pb, ag)) {
+        if (sn >= 1) {
+          el <- "Bronze"
+          tinq <- if (cu/sn < cutoff) {
+            br <- round(cu/sn, 2)
+            tin_val <- "(High Tin content)"
+            paste(br, tin_val)
+          } else {
+            br <- round(cu/sn, 2)
+            tin_val <- "(Low Tin content)"
+            paste(br, tin_val)
+          }
+        } else {
+          el <- "Copper"
+          tinq <- NA
+          br <- NA
+          tin_val <- NA
+        }
+      } else if (fe > max(pb, ag)) {
+        el <- "Iron"
+      } else if (pb > ag) {
+        el <- "Lead"
+      } else {
+        el <- "Silver"
+      }
+      
+      # Create a Data frame
+      if (!exists("df_summary")) {
+        df_summary <- data.frame(
+          id = character(0),
+          element = character(0),
+          Cu_content = double(0),
+          Sn_content = double(0),
+          Pb_content = double(0),
+          Fe_content = double(0),
+          Bronze_ratio = double(0),
+          Bronze_quant = character(0),
+          stringsAsFactors = FALSE
+        )
+      }
+        # Append to the data frame
+        
+        
+        df_summary <- rbind(
+          df_summary,
+          data.frame(
+            id = i,
+            element = el,
+            Cu_content = ifelse(is.na(cu), 0, cu),
+            Sn_content = ifelse(is.na(sn), 0, sn),
+            Pb_content = ifelse(is.na(pb), 0, pb),
+            Fe_content = ifelse(is.na(fe), 0, fe),
+            Bronze_ratio = ifelse(is.na(br),NA, br),
+            Bronze_quant = ifelse(is.na(tin_val), "", tin_val),
+            stringsAsFactors = FALSE
+          )
+        )
+     
+      
+    }
+    
+    df_summary
+    
+  })
+  
+  output$item_type_summary <- renderTable({
+    item_type_summary()
+  })
+  
   # Download Handel
   output$dl <- downloadHandler(
     filename = function() {
@@ -582,8 +683,8 @@ function(input, output, session) {
       tbl1_primary <- data_set1()
       tbl2_total <- data_set2()
       tbl3_no_outlier <- reading_item_selected()
-      tbl4_sd <- reading_item_selected_sd()
-      tbl5_minmax <- reading_item_selected_minmax()
+      tbl4_summary <- reading_item_selected_sd()
+      tbl5_type <- item_type_summary()
       
       
       sheets <- mget(ls(pattern = "tbl")) # getting all objects in your environment with tbl in the name

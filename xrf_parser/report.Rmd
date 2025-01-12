@@ -199,17 +199,3 @@ omitted <- setdiff(reading_value$reading, data$reading)
 ```
 
 The cutoff value for high and low tin content is `r cutoff`.
-
-## Omitted Readings
-
-`r omit_read` readings have been omitted.
-
-```{r echo=FALSE, results='asis'}
-print(
-  kable(
-    reading_value %>%
-      filter(reading %in% omitted) %>% 
-      select(id, reading, `Test Label`, Notes)
-  )
-)
-```
