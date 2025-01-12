@@ -4,6 +4,7 @@ date: "`r Sys.Date()`"
 output: pdf_document
 params:
   choice: NULL
+  reading_value: NULL
   norm: FALSE
 ---
 ```{r echo=FALSE}
@@ -15,14 +16,16 @@ library(viridis)
 cutoff <- 9
 data <- params$choice
 
+reading_value <- params$reading_value
+
 # Get unique items from the `id` column
 items <- sort(unique(unlist(data$id)))
 
+omit_read <- length(reading_value$reading) - length(data$reading)
 ```
 
-**XRF**:    Olympus Vanta M Serise
+**XRF**:    Olympus Vanta M Series
 **Anode**: Silver (Ag)
-**Method**: N/A
 
 # Sample Wise data
 
@@ -61,9 +64,8 @@ for (i in items) {
     select(-id, -sum)      # Drop unnecessary columns
   
   # Print the summary table
+  cat("\n### Element wt% table\n")
   print(kable(wider_table))
-  
-
     
   # Reshape `one_item_data0` to long format for plotting
   df2 <- one_item_data0 %>%
@@ -89,7 +91,17 @@ for (i in items) {
   
   # Print the plot
   print(plot)
+  cat("\n")
+    
+  # Print Reading attributes
+  reading_value2 <- filter(reading_value, id == i)
+  reading_value3 <- select(reading_value2, reading, `Method Name`,
+                          `Test Label`, `Method Name`, contains("Real Time"),
+                          Notes)
   
+  cat("\n### Reading Attributes\n",
+      "\nThis table includes readings which have been omitted\n")
+  print(kable(reading_value3))
   
   cat("\n")
   
@@ -145,9 +157,9 @@ if (fe < max(cu, pb, sn, ag) && fe > 0.5) {
 
 # Print results
 cat("\nType:", el, "\n")
-if (!is.na(tinq)) cat("Cu/Sn ratio",tinq, "\n")
-if (!is.na(pb_con)) cat(pb_con, "\n")
-if (!is.na(fe_con)) cat(fe_con, "\n")
+if (!is.na(tinq)) cat("\n","Cu/Sn ratio",tinq, "\n")
+if (!is.na(pb_con)) cat("\n",pb_con, "\n")
+if (!is.na(fe_con)) cat("\n",fe_con, "\n")
 
 # Create or append to the summary data frame
 if (!exists("df_summary")) {
@@ -182,6 +194,22 @@ df_summary <- rbind(
 
 print(kable(df_summary))
 
+omitted <- setdiff(reading_value$reading, data$reading)
+
 ```
 
 The cutoff value for high and low tin content is `r cutoff`.
+
+## Omitted Readings
+
+`r omit_read` readings have been omitted.
+
+```{r echo=FALSE, results='asis'}
+print(
+  kable(
+    reading_value %>%
+      filter(reading %in% omitted) %>% 
+      select(id, reading, `Test Label`, Notes)
+  )
+)
+```

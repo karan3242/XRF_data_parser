@@ -611,6 +611,7 @@ function(input, output, session) {
       
       # Define the parameters for the RMarkdown report
       params <- list(choice = reading_item_selected(),
+                     reading_value = data_set1(),
                      norm = input$normal_select)
       
       # alt data data_set2()
