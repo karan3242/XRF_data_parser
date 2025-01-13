@@ -17,8 +17,7 @@ library(CC)
 library(knitr)
 
 function(input, output, session) {
-  
-##### Primary data #####
+  ##### Primary data #####
   # Base data set with pre-processing
   
   data_set1 <- reactive({
@@ -27,7 +26,7 @@ function(input, output, session) {
     df <- read_csv(inFile$datapath) %>%
       arrange(Lab_ID)
     
-    df <- select(df, -Date, -Time, )
+    df <- select(df, -Date, -Time)
     
     reading <- c(1:max(row(df)))
     
@@ -85,7 +84,7 @@ function(input, output, session) {
     )
   })
   
-##### Cleaned Data #####
+  ##### Cleaned Data #####
   # Cleaned And Normalized Data
   ## Clean data
   data_set_clean <- reactive({
@@ -154,11 +153,15 @@ function(input, output, session) {
   # Mean and SD of clean Data
   
   data_overview <- reactive({
-    skewness <- function(x) {abs(mean(x, na.rm = TRUE) - median(x, na.rm = TRUE))}
+    skewness <- function(x) {
+      abs(mean(x, na.rm = TRUE) - median(x, na.rm = TRUE))
+    }
     data_set2() %>%
       select(!contains("reading")) %>%
       group_by(id) %>%
-      summarise(across(everything(), list(sd = sd, skew = ~skewness(.x))))
+      summarise(across(everything(), list(
+        sd = sd, skew = ~ skewness(.x)
+      )))
   })
   output$data_overview <- renderTable({
     data_overview()
@@ -170,7 +173,14 @@ function(input, output, session) {
     data_set2() %>%
       select(!contains("reading")) %>%
       group_by(id) %>%
-      summarise(across(everything(), list(mean = mean, median = median, range = diffrange)))
+      summarise(across(
+        everything(),
+        list(
+          mean = mean,
+          median = median,
+          range = diffrange
+        )
+      ))
   })
   output$data_summary_minmax <- renderTable({
     data_summary_minmax()
@@ -182,15 +192,15 @@ function(input, output, session) {
     high_sd <- function(x) {
       x >= input$cutoff
     }
-  skew_abs <- function(x) {
-    x >= input$skew_cut
-  }
+    skew_abs <- function(x) {
+      x >= input$skew_cut
+    }
     
     data_overview() %>%
       filter(if_any(ends_with("sd"), high_sd)) %>%
-      filter(if_any(ends_with("skew"), skew_abs)) %>% 
+      filter(if_any(ends_with("skew"), skew_abs)) %>%
       select(id, ends_with("sd")) %>%
-      select_if(~ any(high_sd(.)))
+      select_if( ~ any(high_sd(.)))
   })
   output$high_sd <- renderTable({
     high_sd()
@@ -253,9 +263,9 @@ function(input, output, session) {
     high_sd_data()
   })
   
-
   
-##### Item Wise Data #####
+  
+  ##### Item Wise Data #####
   
   output$one_item <- renderUI({
     selectInput("one_item",
@@ -355,7 +365,7 @@ function(input, output, session) {
       scale_fill_viridis(discrete = TRUE , alpha = 0.6) +
       theme_minimal() +
       theme(legend.position = "none")
-      
+    
     
     plot2 <- ggplot(df2, aes(x = Elements, y = counts, fill = Elements)) +
       geom_boxplot(outliers = FALSE) +
@@ -363,7 +373,7 @@ function(input, output, session) {
       scale_fill_viridis(discrete = TRUE , alpha = 0.6) +
       theme_minimal() +
       theme(legend.position = "none")
-      
+    
     
     if (input$jitter) {
       print(plot2)
@@ -415,226 +425,231 @@ function(input, output, session) {
     # Pivot the data so rows for `reading` become columns
     wider_table <- pivot_longer(
       table_data,
-      cols = -c(id, reading),   # Keep `id` and `reading` intact
-      names_to = "element",     # Column for variable names
+      cols = -c(id, reading),
+      # Keep `id` and `reading` intact
+      names_to = "element",
+      # Column for variable names
       values_to = "value"       # Column for values
     ) %>%
-      pivot_wider(
-        names_from = reading,   # Use `reading` as new column names
-        values_from = value     # Fill the new columns with values
-      )
+      pivot_wider(names_from = reading, # Use `reading` as new column names
+                  values_from = value)     # Fill the new columns with values)
+                  
+                  std <- apply(wider_table[, -c(1, 2)], 1, sd)
+                  avg <- apply(wider_table[, -c(1, 2)], 1, mean)
+                  median <- apply(wider_table[, -c(1, 2)], 1, median)
+                  sum <- apply(wider_table[, -c(1, 2)], 1, sum)
+                  range <- apply(wider_table[, -c(1, 2)], 1, diffrange)
+                  
+                  df <- cbind(wider_table, std, avg, median, range, sum)
+                  df <- filter(df, sum != 0)
+                  df <- select(df, -id, -sum)
+                  
+                  df
+  })
     
-    std <- apply(wider_table[, -c(1,2)], 1, sd)
-    avg <- apply(wider_table[, -c(1,2)], 1, mean)
-    median <- apply(wider_table[, -c(1,2)], 1, median)
-    sum <- apply(wider_table[, -c(1,2)], 1, sum)
-    range <- apply(wider_table[, -c(1,2)], 1, diffrange)
-    
-    df <- cbind(wider_table, std, avg, median, range, sum)
-    df <- filter(df, sum != 0)
-    df <- select(df, -id, -sum)
-    
-    df
-  })
-  
-  output$one_item_summary <- renderTable({
-    
-    one_item_summary()
-    
-  })
-  
-  # Cleaned Reading Tables.
-  
-  output$reading_item <- renderUI({
-    checkboxGroupInput(
-      "reading_item",
-      "Reading Number",
-      choices = sort(unique(unlist(
-        data_set2()$reading
-      ))),
-      selected = sort(unique(unlist(
-        data_set2()$reading
-      ))),
-      inline = TRUE
-    )
-  })
-  
-  reading_item_selected <- reactive({
-    data_set2() %>% filter(reading %in% input$reading_item)
-  })
-  
-  output$reading_item_selected <- renderTable({
-    reading_item_selected()
-  })
-  
-  reading_item_selected_sd <- reactive({
-    reading_item_selected() %>%
-      select(!contains("reading")) %>%
-      group_by(id) %>%
-      summarise(across(everything(), 
-                       list(sd = sd, mean = mean, median = median,range = diffrange)
-                       ))
-  })
-  
-  output$reading_item_selected_sd <- renderTable({
-    reading_item_selected_sd()
-  })
-  
-  reading_item_selected_minmax <- reactive({
-    reading_item_selected() %>%
-      select(!contains("reading")) %>%
-      group_by(id) %>%
-      summarise(across(everything(), list(min = min, max = max)))
-  })
-  
-  output$reading_item_selected_minmax <-
-    renderTable({
-      reading_item_selected_minmax()
+    output$one_item_summary <- renderTable({
+      one_item_summary()
+      
     })
-  
-
-  
-##### Plotting and Saving #####
-  
-  data_plot <- reactive({
-    dfx <- reading_item_selected_minmax()
-    df_max <- select(dfx, c("id", contains("_max")))
-    colnames(df_max) <- c("id", gsub('_max', '', colnames(select(
-      df_max, contains("max")
-    ))))
     
-    no_0 <- colnames(select(df_max[, as.vector(which(colSums(df_max[2:ncol(df_max)]) >
-                                                       0))], !id))
+    # Cleaned Reading Tables.
     
-    plot_data <- reading_item_selected_sd() %>% select(id, starts_with(no_0))
+    output$reading_item <- renderUI({
+      checkboxGroupInput(
+        "reading_item",
+        "Reading Number",
+        choices = sort(unique(unlist(
+          data_set2()$reading
+        ))),
+        selected = sort(unique(unlist(
+          data_set2()$reading
+        ))),
+        inline = TRUE
+      )
+    })
     
-    data_mean <-
-      plot_data %>%
-      pivot_longer(
-        cols = (contains("mean")),
-        names_to = "Type",
-        values_to = "Value_mean"
-      ) %>%
-      select(id, Type, Value_mean)
+    reading_item_selected <- reactive({
+      data_set2() %>% filter(reading %in% input$reading_item)
+    })
     
-    data_sd <-
-      plot_data %>%
-      pivot_longer(
-        cols = (contains("sd")),
-        names_to = "Type",
-        values_to = "Value_sd"
-      ) %>%
-      select(id, Type, Value_sd)
+    output$reading_item_selected <- renderTable({
+      reading_item_selected()
+    })
     
-    data_mean$Type <- data_mean$Type %>% substr(1, 2)
-    data_sd$Type <- data_sd$Type %>% substr(1, 2)
+    reading_item_selected_sd <- reactive({
+      reading_item_selected() %>%
+        select(!contains("reading")) %>%
+        group_by(id) %>%
+        summarise(across(
+          everything(),
+          list(
+            sd = sd,
+            mean = mean,
+            median = median,
+            range = diffrange
+          )
+        ))
+    })
     
-    data_join <-
-      full_join(data_mean, data_sd, by = join_by(id, Type))
+    output$reading_item_selected_sd <- renderTable({
+      reading_item_selected_sd()
+    })
     
-    ggplotly(
-      ggplot(data_join) +
-        geom_bar(
-          aes(x = id, y = Value_mean, fill = Type),
-          stat = "identity",
-          position = "dodge"
-        ) +
-        geom_errorbar(
-          aes(
-            x = id,
-            ymin = Value_mean - Value_sd,
-            ymax = Value_mean + Value_sd,
-            fill = Type
-          ),
-          position = "dodge",
-          colour = "#FF0000",
-          alpha = 0.9,
-          size = 0.8
-        ) +
-        scale_fill_viridis(discrete = TRUE, name = "") +
-        theme_classic() +
-        theme(axis.line = element_blank(), axis.ticks = element_blank(), ) +
-        labs(x = NULL, y = "Element %", title = "Elemet values - Normalized Data")
-    )
+    reading_item_selected_minmax <- reactive({
+      reading_item_selected() %>%
+        select(!contains("reading")) %>%
+        group_by(id) %>%
+        summarise(across(everything(), list(min = min, max = max)))
+    })
     
-  })
-  output$plot <- renderPlotly({
-    data_plot()
-  })
-  
-  ##### Item Type Breakdown ######
-  
-  item_type_summary <- reactive({
-    data <- reading_item_selected_sd() %>% select(id, contains("mean"))
-    
-    ids <- data$id
+    output$reading_item_selected_minmax <-
+      renderTable({
+        reading_item_selected_minmax()
+      })
     
     
-    for (i in ids){
-      # Set Element Variables
-      cu <- filter(data, id == i) %>% select(contains("Cu")) %>% as.double()
-      sn <- filter(data, id == i) %>% select(contains("Sn")) %>% as.double()
-      pb <- filter(data, id == i) %>% select(contains("Pb")) %>% as.double()
-      fe <- filter(data, id == i) %>% select(contains("Fe")) %>% as.double()
-      ag <- filter(data, id == i) %>% select(contains("Ag")) %>% as.double()
+    
+    ##### Plotting and Saving #####
+    
+    data_plot <- reactive({
+      dfx <- reading_item_selected_minmax()
+      df_max <- select(dfx, c("id", contains("_max")))
+      colnames(df_max) <- c("id", gsub('_max', '', colnames(select(
+        df_max, contains("max")
+      ))))
+      
+      no_0 <- colnames(select(df_max[, as.vector(which(colSums(df_max[2:ncol(df_max)]) >
+                                                         0))], !id))
+      
+      plot_data <- reading_item_selected_sd() %>% select(id, starts_with(no_0))
+      
+      data_mean <-
+        plot_data %>%
+        pivot_longer(
+          cols = (contains("mean")),
+          names_to = "Type",
+          values_to = "Value_mean"
+        ) %>%
+        select(id, Type, Value_mean)
+      
+      data_sd <-
+        plot_data %>%
+        pivot_longer(
+          cols = (contains("sd")),
+          names_to = "Type",
+          values_to = "Value_sd"
+        ) %>%
+        select(id, Type, Value_sd)
+      
+      data_mean$Type <- data_mean$Type %>% substr(1, 2)
+      data_sd$Type <- data_sd$Type %>% substr(1, 2)
+      
+      data_join <-
+        full_join(data_mean, data_sd, by = join_by(id, Type))
+      
+      ggplotly(
+        ggplot(data_join) +
+          geom_bar(
+            aes(x = id, y = Value_mean, fill = Type),
+            stat = "identity",
+            position = "dodge"
+          ) +
+          geom_errorbar(
+            aes(
+              x = id,
+              ymin = Value_mean - Value_sd,
+              ymax = Value_mean + Value_sd,
+              fill = Type
+            ),
+            position = "dodge",
+            colour = "#FF0000",
+            alpha = 0.9,
+            size = 0.8
+          ) +
+          scale_fill_viridis(discrete = TRUE, name = "") +
+          theme_classic() +
+          theme(axis.line = element_blank(), axis.ticks = element_blank(), ) +
+          labs(x = NULL, y = "Element %", title = "Elemet values - Normalized Data")
+      )
+      
+    })
+    output$plot <- renderPlotly({
+      data_plot()
+    })
+    
+    ##### Item Type Breakdown ######
+    
+    item_type_summary <- reactive({
+      data <- reading_item_selected_sd() %>% select(id, contains("mean"))
+      
+      ids <- data$id
       
       
-      # Replace NA values with 0
-      cu <- ifelse(is.na(cu), 0, cu)
-      sn <- ifelse(is.na(sn), 0, sn)
-      pb <- ifelse(is.na(pb), 0, pb)
-      fe <- ifelse(is.na(fe), 0, fe)
-      ag <- ifelse(is.na(ag), 0, ag)
-      
-      # Initialize variables for results
-      el <- ""
-      cutoff <- 9
-      br <- NA
-      tin_val <- NA
-      
-      # Main logic
-      if (cu > max(fe, pb, ag)) {
-        if (sn >= 1) {
-          el <- "Bronze"
-          if (cu/sn < cutoff) {
-            if (cu/sn < 1) {
-              br <- round(cu/sn, 2)
-              tin_val <- "(Mostly Tin)"
+      for (i in ids) {
+        # Set Element Variables
+        cu <- filter(data, id == i) %>% select(contains("Cu")) %>% as.double()
+        sn <- filter(data, id == i) %>% select(contains("Sn")) %>% as.double()
+        pb <- filter(data, id == i) %>% select(contains("Pb")) %>% as.double()
+        fe <- filter(data, id == i) %>% select(contains("Fe")) %>% as.double()
+        ag <- filter(data, id == i) %>% select(contains("Ag")) %>% as.double()
+        
+        
+        # Replace NA values with 0
+        cu <- ifelse(is.na(cu), 0, cu)
+        sn <- ifelse(is.na(sn), 0, sn)
+        pb <- ifelse(is.na(pb), 0, pb)
+        fe <- ifelse(is.na(fe), 0, fe)
+        ag <- ifelse(is.na(ag), 0, ag)
+        
+        # Initialize variables for results
+        el <- ""
+        cutoff <- 9
+        br <- NA
+        tin_val <- NA
+        
+        # Main logic
+        if (cu > max(fe, pb, ag)) {
+          if (sn >= 1) {
+            el <- "Bronze"
+            if (cu / sn < cutoff) {
+              if (cu / sn < 1) {
+                br <- round(cu / sn, 2)
+                tin_val <- "(Mostly Tin)"
+              }
+              br <- round(cu / sn, 2)
+              tin_val <- "(High Tin content)"
+            } else {
+              br <- round(cu / sn, 2)
+              tin_val <- "(Low Tin content)"
             }
-            br <- round(cu/sn, 2)
-            tin_val <- "(High Tin content)"
           } else {
-            br <- round(cu/sn, 2)
-            tin_val <- "(Low Tin content)"
+            el <- "Copper"
+            tinq <- NA
+            br <- NA
+            tin_val <- NA
           }
+        } else if (fe > max(pb, ag)) {
+          el <- "Iron"
+        } else if (pb > ag) {
+          el <- "Lead"
         } else {
-          el <- "Copper"
-          tinq <- NA
-          br <- NA
-          tin_val <- NA
+          el <- "Silver"
         }
-      } else if (fe > max(pb, ag)) {
-        el <- "Iron"
-      } else if (pb > ag) {
-        el <- "Lead"
-      } else {
-        el <- "Silver"
-      }
-      
-      # Create a Data frame
-      if (!exists("df_summary")) {
-        df_summary <- data.frame(
-          id = character(0),
-          element = character(0),
-          Cu_content = double(0),
-          Sn_content = double(0),
-          Pb_content = double(0),
-          Fe_content = double(0),
-          Bronze_ratio = double(0),
-          Bronze_quant = character(0),
-          stringsAsFactors = FALSE
-        )
-      }
+        
+        # Create a Data frame
+        if (!exists("df_summary")) {
+          df_summary <- data.frame(
+            id = character(0),
+            element = character(0),
+            Cu_content = double(0),
+            Sn_content = double(0),
+            Pb_content = double(0),
+            Fe_content = double(0),
+            Bronze_ratio = double(0),
+            Bronze_quant = character(0),
+            stringsAsFactors = FALSE
+          )
+        }
         # Append to the data frame
         
         
@@ -647,158 +662,169 @@ function(input, output, session) {
             Sn_content = ifelse(is.na(sn), 0, sn),
             Pb_content = ifelse(is.na(pb), 0, pb),
             Fe_content = ifelse(is.na(fe), 0, fe),
-            Bronze_ratio = ifelse(is.na(br) & el !="Bronze",NA, br),
-            Bronze_quant = ifelse(is.na(tin_val) & el !="Bronze", "", tin_val),
+            Bronze_ratio = ifelse(is.na(br) & el != "Bronze", NA, br),
+            Bronze_quant = ifelse(is.na(tin_val) &
+                                    el != "Bronze", "", tin_val),
             stringsAsFactors = FALSE
           )
         )
-     
+        
+        
+      }
       
-    }
-    
-    df_summary
-    
-  })
-  
-  output$item_type_summary <- renderTable({
-    item_type_summary()
-  })
-  
-  # Download Handel
-  output$dl <- downloadHandler(
-    filename = function() {
-      paste0("df_dmodel", "_Table", ".xlsx")
-    },
-    content = function(file) {
-      tbl1_primary <- data_set1()
-      tbl2_total <- data_set2()
-      tbl3_no_outlier <- reading_item_selected()
-      tbl4_summary <- reading_item_selected_sd()
-      tbl5_type <- item_type_summary()
+      df_summary
       
-      
-      sheets <- mget(ls(pattern = "tbl")) # getting all objects in your environment with tbl in the name
-      #names(sheets) <- paste0("sheet", seq_len(length(sheets))) # changing the names in your list
-      writexl::write_xlsx(sheets, path = file) # saving the file
-    }
-  )
-  
-  ##### Report #####
-  
-  output$report <- downloadHandler(
+    })
     
-    filename = function() {
-      "report.pdf"  # File name for the downloaded file
-    },
+    output$item_type_summary <- renderTable({
+      item_type_summary()
+    })
     
-    content = function(file) {
-      # Create a temporary file path for the RMarkdown report
-      tempReport <- file.path(tempdir(), "report.Rmd")
-      
-      # Copy the RMarkdown file to the temporary directory
-      file.copy("/home/kd/PARA/Resources/R_scripts/r_xrf_data_cleanup/xrf_parser/report.Rmd", 
-                tempReport, 
-                overwrite = TRUE)
-      
-      # Define the parameters for the RMarkdown report
-      params <- list(choice = reading_item_selected(),
-                     reading_value = data_set1(),
-                     norm = input$normal_select)
-      
-      # alt data data_set2()
-      
-      # Render the RMarkdown report to the specified output file
-      rmarkdown::render(
-        input = tempReport,
-        output_file = file,
-        params = params,
-        envir = new.env(parent = globalenv())
-      )
-    }
-  )
-  
-###### Beam spectra #####
-
-  beam1 <- reactive({
-    inFile <- input$fileb
-    df1 <- read_csv(inFile$datapath) %>% slice(2, 4, 40:2086) %>% select(-1)
-    df1 <- df1[ , colSums(is.na(df1)) == 0] #remove Na colums
-  })
-  #output$beam1 <- renderTable({beam1()})
-  
-  output$readings <- renderUI({
-    selectInput(
-      "reading", 
-      "Reading", 
-      choices = unique(unlist(beam1()[1, ])),
-      selected = NULL)
-    
-  })
-  
-  df3 <- reactive({
-    df2 <- as.vector(beam1()[1, ] == input$reading)
-    df3 <- as.data.frame(beam1()[,df2]) %>% slice(2:max(row(beam1())))
-    names(df3) <- df3[1,]
-    df3 <- df3 %>% slice(2:max(row(beam1())))
-    
-    kev <- seq(0.02 , by = 0.02, length.out = max(row(df3)))
-    
-    df3$kev <- kev
-    df3 <- mutate_all(df3, as.double)
-  })
-  #output$df3 <-renderTable({df3()})
-  
-  output$xaxis <- renderUI({
-    xmax <- max(df3()$kev)
-    sliderInput("xaxis", "X-axis", 0, xmax, value = c(0,10))
-  })
-  
-  output$yaxis <- renderUI({
-    lim <- max(max(df3()[,1]),max(df3()[,2]))
-    sliderInput("yaxis", "Y-axis", 0, lim, value = lim)
-  })
-  
-  
-  plot1 <- reactive({ggplot(df3(), aes(x=kev)) +
-      geom_area(aes(y=`2`, fill ='Exposer 2')) +
-      geom_area(aes(y = `1`, fill = 'Exposer 1'))+
-      scale_fill_manual(values = c("#CD6C53", "#839FBA"), 
-                        labels = c("Exposer 1", "Exposer 2")) +
-      coord_cartesian(xlim= c(input$xaxis[1], input$xaxis[2]), ylim = c(0, input$yaxis)) +
-      scale_y_continuous(expand = expansion(mult = 0)) +
-      theme_light() +
-      labs(y = "Counts/s", x = "KeV") +
-      theme(legend.position = "bottom",
-            #legend.justification = c("left", "top"),
-            legend.title = element_blank(),
-            legend.background = element_rect(size = 1,
-                                             color = "grey",
-            ),
-            axis.title = element_text(face="bold")) +
-      labs(title = input$title, col = 'variable')
-    
-  })
-  
-  
-  
-  output$beam_plot <- renderPlot({plot1()
-    
-    # plot2 <- plot1 + 
-    #   geom_area(aes(y=`3`, fill = 'Exposer 3'))
-    
-  })
-  
-  #Save plot to file
-  observeEvent(input$savePlot, {
-    ggsave(
-      filename = file.path(input$dstpath, paste0(input$dstplot,"_", input$title, ".png")),
-      plot = plot1(),
-      width = as.integer(input$pwidth),
-      height = as.integer(input$pheight),
-      units = "px",
-      dpi = as.integer(input$dpi)
+    # Download Handel
+    output$dl <- downloadHandler(
+      filename = function() {
+        paste0("df_dmodel", "_Table", ".xlsx")
+      },
+      content = function(file) {
+        tbl1_primary <- data_set1()
+        tbl2_total <- data_set2()
+        tbl3_no_outlier <- reading_item_selected()
+        tbl4_summary <- reading_item_selected_sd()
+        tbl5_type <- item_type_summary()
+        
+        
+        sheets <- mget(ls(pattern = "tbl")) # getting all objects in your environment with tbl in the name
+        #names(sheets) <- paste0("sheet", seq_len(length(sheets))) # changing the names in your list
+        writexl::write_xlsx(sheets, path = file) # saving the file
+      }
     )
-  })
-  
-  
+    
+    ##### Report #####
+    
+    output$report <- downloadHandler(
+      filename = function() {
+        "report.pdf"  # File name for the downloaded file
+      },
+      
+      content = function(file) {
+        # Create a temporary file path for the RMarkdown report
+        tempReport <- file.path(tempdir(), "report.Rmd")
+        
+        # Copy the RMarkdown file to the temporary directory
+        file.copy(
+          "/home/kd/PARA/Resources/R_scripts/r_xrf_data_cleanup/xrf_parser/report.Rmd",
+          tempReport,
+          overwrite = TRUE
+        )
+        
+        # Define the parameters for the RMarkdown report
+        params <- list(
+          choice = reading_item_selected(),
+          reading_value = data_set1(),
+          norm = input$normal_select
+        )
+        
+        # alt data data_set2()
+        
+        # Render the RMarkdown report to the specified output file
+        rmarkdown::render(
+          input = tempReport,
+          output_file = file,
+          params = params,
+          envir = new.env(parent = globalenv())
+        )
+      }
+    )
+    
+    ###### Beam spectra #####
+    
+    beam1 <- reactive({
+      inFile <- input$fileb
+      df1 <- read_csv(inFile$datapath) %>% slice(2, 4, 40:2086) %>% select(-1)
+      df1 <- df1[, colSums(is.na(df1)) == 0] #remove Na colums
+    })
+    #output$beam1 <- renderTable({beam1()})
+    
+    output$readings <- renderUI({
+      selectInput("reading",
+                  "Reading",
+                  choices = unique(unlist(beam1()[1, ])),
+                  selected = NULL)
+      
+    })
+    
+    df3 <- reactive({
+      df2 <- as.vector(beam1()[1, ] == input$reading)
+      df3 <- as.data.frame(beam1()[, df2]) %>% slice(2:max(row(beam1())))
+      names(df3) <- df3[1, ]
+      df3 <- df3 %>% slice(2:max(row(beam1())))
+      
+      kev <- seq(0.02 , by = 0.02, length.out = max(row(df3)))
+      
+      df3$kev <- kev
+      df3 <- mutate_all(df3, as.double)
+    })
+    #output$df3 <-renderTable({df3()})
+    
+    output$xaxis <- renderUI({
+      xmax <- max(df3()$kev)
+      sliderInput("xaxis", "X-axis", 0, xmax, value = c(0, 10))
+    })
+    
+    output$yaxis <- renderUI({
+      lim <- max(max(df3()[, 1]), max(df3()[, 2]))
+      sliderInput("yaxis", "Y-axis", 0, lim, value = lim)
+    })
+    
+    
+    plot1 <- reactive({
+      ggplot(df3(), aes(x = kev)) +
+        geom_area(aes(y = `2`, fill = 'Exposer 2')) +
+        geom_area(aes(y = `1`, fill = 'Exposer 1')) +
+        scale_fill_manual(
+          values = c("#CD6C53", "#839FBA"),
+          labels = c("Exposer 1", "Exposer 2")
+        ) +
+        coord_cartesian(xlim = c(input$xaxis[1], input$xaxis[2]),
+                        ylim = c(0, input$yaxis)) +
+        scale_y_continuous(expand = expansion(mult = 0)) +
+        theme_light() +
+        labs(y = "Counts/s", x = "KeV") +
+        theme(
+          legend.position = "bottom",
+          #legend.justification = c("left", "top"),
+          legend.title = element_blank(),
+          legend.background = element_rect(size = 1, color = "grey"),
+          axis.title = element_text(face = "bold")
+        ) +
+        labs(title = input$title, col = 'variable')
+      
+    })
+    
+    
+    
+    output$beam_plot <- renderPlot({
+      plot1()
+      
+      # plot2 <- plot1 +
+      #   geom_area(aes(y=`3`, fill = 'Exposer 3'))
+      
+    })
+    
+    #Save plot to file
+    observeEvent(input$savePlot, {
+      ggsave(
+        filename = file.path(
+          input$dstpath,
+          paste0(input$dstplot, "_", input$title, ".png")
+        ),
+        plot = plot1(),
+        width = as.integer(input$pwidth),
+        height = as.integer(input$pheight),
+        units = "px",
+        dpi = as.integer(input$dpi)
+      )
+    })
+    
+    
 }
