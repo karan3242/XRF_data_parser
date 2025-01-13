@@ -712,7 +712,7 @@ function(input, output, session) {
         
         # Copy the RMarkdown file to the temporary directory
         file.copy(
-          "/home/kd/PARA/Resources/R_scripts/r_xrf_data_cleanup/xrf_parser/report.Rmd",
+          "./report.Rmd",
           tempReport,
           overwrite = TRUE
         )
