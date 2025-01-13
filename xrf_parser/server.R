@@ -703,7 +703,7 @@ function(input, output, session) {
     
     output$report <- downloadHandler(
       filename = function() {
-        "report.pdf"  # File name for the downloaded file
+        "report.html"  # File name for the downloaded file
       },
       
       content = function(file) {
@@ -731,7 +731,7 @@ function(input, output, session) {
           input = tempReport,
           params = params,
           envir = new.env(parent = globalenv())
-        )
+        ) #End render
         file.rename(out,file)
       }
     )

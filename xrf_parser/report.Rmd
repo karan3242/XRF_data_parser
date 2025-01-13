@@ -1,7 +1,6 @@
 ---
 title: "Report"
 date: "`r Sys.Date()`"
-output: pdf_document
 params:
   choice: NULL
   reading_value: NULL
