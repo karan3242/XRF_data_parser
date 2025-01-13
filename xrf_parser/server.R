@@ -443,24 +443,6 @@ function(input, output, session) {
     
   })
   
-  # output$one_item_outlier <- renderTable({
-  #   one_item_outlier()
-  # })
-  # 
-  # output$one_item_summary <- renderPrint({
-  #   summary(select(one_item_outlier(), !contains(c(
-  #     "id", "reading", "z_score"
-  #   ))))
-  # })
-  # 
-  # output$one_item_high_sd <- renderTable({
-  #   one_item_outlier()  %>%
-  #     select(!contains(c("reading", "z_score"))) %>%
-  #     group_by(id) %>%
-  #     summarise(across(everything(), list(sd = sd, range = diffrange)))
-  #   
-  # })
-  
   # Cleaned Reading Tables.
   
   output$reading_item <- renderUI({
