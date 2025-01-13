@@ -6,6 +6,7 @@
 
 -   OLYMPUS VANTA pXRF device
 -   Geo Chem export method
+-   pdflatex should be installed for the report function to compile correctly.
 
 Ensure the CSV export follows the Geo Chem format with Item notes labeled as `LAB_ID`. The ID should contain both letters and numbers for string value compatibility.
 
