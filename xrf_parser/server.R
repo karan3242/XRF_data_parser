@@ -727,12 +727,12 @@ function(input, output, session) {
         # alt data data_set2()
         
         # Render the RMarkdown report to the specified output file
-        rmarkdown::render(
+        out <- rmarkdown::render(
           input = tempReport,
-          output_file = file,
           params = params,
           envir = new.env(parent = globalenv())
         )
+        file.rename(out,file)
       }
     )
     
