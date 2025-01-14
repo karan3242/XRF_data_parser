@@ -645,7 +645,7 @@ function(input, output, session) {
             Sn_content = double(0),
             Pb_content = double(0),
             Fe_content = double(0),
-            Bronze_ratio = double(0),
+            Cu_Sn = double(0),
             Bronze_quant = character(0),
             stringsAsFactors = FALSE
           )
@@ -662,7 +662,7 @@ function(input, output, session) {
             Sn_content = ifelse(is.na(sn), 0, sn),
             Pb_content = ifelse(is.na(pb), 0, pb),
             Fe_content = ifelse(is.na(fe), 0, fe),
-            Bronze_ratio = ifelse(is.na(br) & el != "Bronze", NA, br),
+            Cu_Sn = ifelse(is.na(br) & el != "Bronze", NA, br),
             Bronze_quant = ifelse(is.na(tin_val) &
                                     el != "Bronze", "", tin_val),
             stringsAsFactors = FALSE
