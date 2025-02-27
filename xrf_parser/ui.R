@@ -7,13 +7,8 @@
 #    https://shiny.posit.co/
 #
 
-library(shiny)
-library(readr)
-library(tidyverse)
-library(viridis)
-library(plotly)
-library(shinythemes)
-library(bslib)
+##### Load Preamble #####
+source("./preamble.R")
 
 # Define the UI
 fluidPage(
@@ -27,7 +22,9 @@ fluidPage(
       fileInput(
         "file1",
         "Choose CSV File",
-        accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")
+        accept = c("text/csv", 
+                   "text/comma-separated-values,text/plain", 
+                   ".csv")
       ),
       tagList(
         tags$p("<LOD values have been converted to 0"),

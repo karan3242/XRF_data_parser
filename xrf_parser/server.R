@@ -7,58 +7,24 @@
 #    https://shiny.posit.co/
 #
 
+##### Load Preamble #####
+source("./preamble.R")
 
-library(shiny)
-library(readr)
-library(tidyverse)
-library(viridis)
-library(plotly)
-library(writexl)
-library(CC)
-library(knitr)
-
+##### Main Function #####
 function(input, output, session) {
+  
   ##### Primary data #####
+  source("./primarydata.R")
   # Base data set with pre-processing
   
-  data_set1 <- reactive({
-    inFile <- input$file1
-    
-    df <- read_csv(inFile$datapath) %>%
-      arrange(Lab_ID)
-    
-    df <- select(df, -Date, -Time)
-    
-    reading <- c(1:max(row(df)))
-    
-    df <- cbind(df, reading)
-    
-    df <- select(df, id = Lab_ID, reading, everything())
-    
-    df[df == '<LOD'] <- NA
-    
-    df <- df %>%
-      mutate_at(vars(contains("Concentration")), as.numeric)
-    
-    df[is.na(df)] <- 0
-    
-    df$id <- as.character(df$id)
-    df$`Instrument Serial Num` <- as.integer(df$`Instrument Serial Num`)
-    df$`Test Label` <- as.integer(df$`Test Label`)
-    
-    df$Notes[df$Notes == 0] <- NA
-    
-    df$Notes <- as.character(df$Notes)
-    
-    return(df)
-  })
-  
+  data_set1 <- primarydata(input, output, session)
   output$data_set1 <- renderTable({
     data_set1()
   })
   
+  ##### Data Overview #####
   # Lab items output selection
-  #lab itmes selections
+  ## lab items selections
   output$lab_items <- renderUI({
     req(data_set1())
     checkboxGroupInput(
@@ -70,7 +36,6 @@ function(input, output, session) {
     )
   })
   ## element selections
-  
   output$elm <- renderUI({
     req(data_set1())
     elmt <- sort(gsub(' Concentration', '', colnames(select(
@@ -85,9 +50,9 @@ function(input, output, session) {
       selected = elmt
     )
   })
-  
-  ##### Cleaned Data #####
+
   # Cleaned And Normalized Data
+  
   ## Clean data
   data_set_clean <- reactive({
     req(input$lab_id, data_set1())
