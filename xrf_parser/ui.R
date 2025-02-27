@@ -146,6 +146,7 @@ fluidPage(
                      ".csv")
         ),
         uiOutput("readings"),
+        uiOutput("xrayElement"),
         uiOutput("xaxis"),
         uiOutput("yaxis"),
         textInput("title", "Plot Title", "Item", placeholder = "Item"),
@@ -166,7 +167,8 @@ fluidPage(
         )
         
       ),
-      mainPanel(plotOutput("beam_plot", height = 700))
+      mainPanel(plotOutput("beam_plot", height = 700),
+                tableOutput("EnergyLines"))
     ),
     
     # About Page
