@@ -7,6 +7,7 @@
 #    https://shiny.posit.co/
 #
 
+
 library(shiny)
 library(readr)
 library(tidyverse)
@@ -51,6 +52,7 @@ function(input, output, session) {
     
     return(df)
   })
+  
   output$data_set1 <- renderTable({
     data_set1()
   })
