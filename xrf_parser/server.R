@@ -747,7 +747,6 @@ function(input, output, session) {
         geom_vline(xintercept = as.numeric(EnergyLines()$Kb), color = 'darkblue') + 
         geom_vline(xintercept = as.numeric(EnergyLines()$La), color = 'green') + 
         geom_vline(xintercept = as.numeric(EnergyLines()$Lb), color = 'darkgreen') + 
-        theme_light() +
         labs(y = "Counts/s", x = "KeV") +
         theme(
           legend.position = "bottom",
@@ -761,10 +760,36 @@ function(input, output, session) {
      
     })
     
+    plot2 <- reactive({
+      ggplot(df3(), aes(x = kev)) +
+        geom_area(aes(y = `2`, fill = 'Exposer 2')) +
+        geom_area(aes(y = `1`, fill = 'Exposer 1')) +
+        scale_fill_manual(
+          values = c("#CD6C53", "#839FBA"),
+          labels = c("Exposer 1", "Exposer 2")
+        ) +
+        coord_cartesian(xlim = c(input$xaxis[1], input$xaxis[2]),
+                        ylim = c(0, input$yaxis)) +
+        scale_y_continuous(expand = expansion(mult = 0)) +
+        labs(y = "Counts/s", x = "KeV") +
+        theme(
+          legend.position = "bottom",
+          #legend.justification = c("left", "top"),
+          legend.title = element_blank(),
+          legend.background = element_rect(size = 1, color = "grey"),
+          axis.title = element_text(face = "bold")
+        ) +
+        labs(title = input$title, col = 'variable')
+    })
     
     
     output$beam_plot <- renderPlot({
-      plot1()
+      if(input$ElementLines){
+        plot1()
+      } else {
+        plot2()
+      }
+      
       
       # plot2 <- plot1 +
       #   geom_area(aes(y=`3`, fill = 'Exposer 3'))

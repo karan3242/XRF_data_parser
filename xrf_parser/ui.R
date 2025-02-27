@@ -147,6 +147,7 @@ fluidPage(
         ),
         uiOutput("readings"),
         uiOutput("xrayElement"),
+        checkboxInput("ElementLines", "Element Lines", value = FALSE),
         uiOutput("xaxis"),
         uiOutput("yaxis"),
         textInput("title", "Plot Title", "Item", placeholder = "Item"),
