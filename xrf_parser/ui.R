@@ -9,14 +9,13 @@
 
 ##### Load Preamble #####
 source("./preamble.R")
-
 # Define the UI
 fluidPage(
   theme = shinytheme("flatly"),
   navbarPage(
     "XRF Data Parsing",
     
-    # Primary Data tab
+    ##### Primary Data tab #####
     tabPanel(
       "Primary Data",
       fileInput(
@@ -32,7 +31,7 @@ fluidPage(
       )
     ),
     
-    # Data Overview tab
+    ##### Data Overview tab #####
     tabPanel(
       "Data Overview",
       uiOutput("lab_items"),
@@ -86,6 +85,7 @@ fluidPage(
       )
     ),
     
+    ##### Item Details Tab #####
     tabPanel(
       "Item Details",
       uiOutput("one_item"),
@@ -107,6 +107,8 @@ fluidPage(
         )
       )
     ),
+    
+    ##### Selected Readings Tab ####
     tabPanel(
       "Selected Readings",
       uiOutput("reading_item"),
@@ -122,17 +124,17 @@ fluidPage(
       )
     ),
     
-    # Plot tab
+    ##### Plot and Reports tab #####
     tabPanel(
       "Item Summary",
       # tags$h1("Plot"),
       plotlyOutput("plot"),
-      tableOutput("item_type_summary"),
+      #tableOutput("item_type_summary"),
       downloadButton('dl', "Download the data"),
       downloadButton("report","Generate report"),
     ),
     
-    # Beam Spectra
+    ##### Beam Spectra #####
     tabPanel(
       "Beam Spectra",
       sidebarPanel(

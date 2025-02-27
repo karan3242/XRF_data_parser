@@ -27,3 +27,9 @@ normalize_rows <- function(data) {
   
   return(normalized_data)
 }
+
+##### Skewness ######
+
+skewness <- function(x) {
+  abs(mean(x, na.rm = TRUE) - median(x, na.rm = TRUE))
+}

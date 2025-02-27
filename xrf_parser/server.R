@@ -9,14 +9,12 @@
 
 ##### Load Preamble #####
 source("./preamble.R")
-
+source("./functions.R")
 ##### Main Function #####
 function(input, output, session) {
   
   ##### Primary data #####
   source("./primarydata.R")
-  # Base data set with pre-processing
-  
   data_set1 <- primarydata(input, output, session)
   output$data_set1 <- renderTable({
     data_set1()
@@ -73,34 +71,6 @@ function(input, output, session) {
   
   ## Nomral Data
   data_set_normal <- reactive({
-    normalize_rows <- function(data) {
-      # Input validation
-      if (!is.data.frame(data))
-        stop("Input must be a data frame.")
-      if (ncol(data) < 3)
-        stop("Data must have at least 3 columns.")
-      
-      # Extracting IDs and readings
-      id <- data[[1]]       # Assuming first column is ID
-      reading <- data[[2]]  # Assuming second column is Reading
-      
-      # Normalizing rows
-      normalized_data <- t(apply(data[, -c(1, 2), drop = FALSE], 1, function(row) {
-        row_sum <- sum(row, na.rm = TRUE)
-        if (row_sum == 0) {
-          return(rep(0, length(row)))  # Handle rows that sum to 0
-        }
-        normalized_row <- round((row / row_sum * 100), digits = 2)
-        return(normalized_row)
-      }))
-      
-      # Combining results into a data frame
-      normalized_data <- data.frame(id, reading, normalized_data)
-      colnames(normalized_data) <- c(colnames(data)[1:2], colnames(data)[-c(1, 2)])
-      
-      return(normalized_data)
-    }
-    
     normalize_rows(data_set_clean())
   })
   
@@ -112,7 +82,6 @@ function(input, output, session) {
       data_set_normal()
     }
   })
-  
   output$data_set2 <- renderTable({
     data_set2()
   })
@@ -120,9 +89,6 @@ function(input, output, session) {
   # Mean and SD of clean Data
   
   data_overview <- reactive({
-    skewness <- function(x) {
-      abs(mean(x, na.rm = TRUE) - median(x, na.rm = TRUE))
-    }
     data_set2() %>%
       select(!contains("reading")) %>%
       group_by(id) %>%
@@ -130,6 +96,7 @@ function(input, output, session) {
         sd = sd, skew = ~ skewness(.x)
       )))
   })
+  
   output$data_overview <- renderTable({
     data_overview()
   })
@@ -330,7 +297,6 @@ function(input, output, session) {
     plot <- ggplot(df2, aes(x = Elements, y = counts, fill = Elements)) +
       geom_boxplot(outliers = TRUE) +
       scale_fill_viridis(discrete = TRUE , alpha = 0.6) +
-      theme_minimal() +
       theme(legend.position = "none")
     
     
@@ -338,7 +304,6 @@ function(input, output, session) {
       geom_boxplot(outliers = FALSE) +
       geom_jitter(color = "red", alpha = 0.9) +
       scale_fill_viridis(discrete = TRUE , alpha = 0.6) +
-      theme_minimal() +
       theme(legend.position = "none")
     
     
@@ -534,7 +499,6 @@ function(input, output, session) {
             size = 0.8
           ) +
           scale_fill_viridis(discrete = TRUE, name = "") +
-          theme_classic() +
           theme(axis.line = element_blank(), axis.ticks = element_blank(), ) +
           labs(x = NULL, y = "Element %", title = "Elemet values - Normalized Data")
       )
@@ -544,7 +508,7 @@ function(input, output, session) {
       data_plot()
     })
     
-    ##### Item Type Breakdown ######
+    # Item Type Breakdown
     
     item_type_summary <- reactive({
       data <- reading_item_selected_sd() %>% select(id, contains("mean"))
@@ -666,7 +630,7 @@ function(input, output, session) {
       }
     )
     
-    ##### Report #####
+    # Report
     
     output$report <- downloadHandler(
       filename = function() {

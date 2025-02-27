@@ -8,9 +8,7 @@ params:
 ---
 ```{r echo=FALSE}
 
-library(tidyverse)
-library(knitr)
-library(viridis)
+source("./preamble.R")
 
 cutoff <- 9
 data <- params$choice
