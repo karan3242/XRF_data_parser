@@ -669,6 +669,10 @@ function(input, output, session) {
     
     ###### Beam spectra #####
     
+    # Source xray Energy Files
+    
+    source("./SubFiles/xrayEnergy.R")
+    
     beam1 <- reactive({
       inFile <- input$fileb
       df1 <- read_csv(inFile$datapath) %>% slice(2, 4, 40:2086) %>% select(-1)
