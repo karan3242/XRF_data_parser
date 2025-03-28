@@ -8,13 +8,13 @@
 #
 
 ##### Load Preamble #####
-source("./SubFiles/preamble.R")
-source("./SubFiles/functions.R")
+# source("./SubFiles/preamble.R")
+# source("./SubFiles/functions.R")
 ##### Main Function #####
 function(input, output, session) {
   
   ##### Primary data #####
-  source("./SubFiles/primarydata.R")
+  # source("./SubFiles/primarydata.R")
   data_set1 <- primarydata(input, output, session)
   output$data_set1 <- renderTable({
     data_set1()

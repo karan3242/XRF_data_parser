@@ -8,7 +8,6 @@
 #
 
 ##### Load Preamble #####
-source("./SubFiles/preamble.R")
 # Define the UI
 fluidPage(
   theme = shinytheme("flatly"),
