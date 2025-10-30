@@ -4,8 +4,6 @@ pkgs <- c("shiny", "readr", "tidyverse",
 pkginst <- lapply(pkgs, library, character.only = TRUE)
 theme_set(theme_classic())
 
-
-
 # Primary data parsing
 
 primarydata <- function(input, output, session) {

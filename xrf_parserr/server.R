@@ -1,20 +1,7 @@
-#
-# This is the server logic of a Shiny web application. You can run the
-# application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    https://shiny.posit.co/
-#
-
-##### Load Preamble #####
-# source("./SubFiles/preamble.R")
-# source("./SubFiles/functions.R")
 ##### Main Function #####
 function(input, output, session) {
   
   ##### Primary data #####
-  # source("./SubFiles/primarydata.R")
   data_set1 <- primarydata(input, output, session)
   output$data_set1 <- renderTable({
     data_set1()
