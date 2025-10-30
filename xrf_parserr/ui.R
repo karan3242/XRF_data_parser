@@ -3,8 +3,47 @@
 fluidPage(
   theme = shinytheme("flatly"),
   
-  # ----- Raw Data ----
-  fileInput("raw_csv", "Choose File"),
-  reactableOutput("raw_data")
-  
+  navset_pill(
+    # ----- Raw Data ----
+    nav_panel(
+      "Raw Data",
+      sidebarPanel(
+        fileInput("raw_csv", "Choose File"),
+        selectInput("samples", "Select Samples:",
+                    choices = NULL, multiple = TRUE),
+        selectInput("methods", "Select Methods:",
+                    choices = NULL, multiple = TRUE)
+      ),
+      mainPanel(
+        reactableOutput("raw_data")
+      )
+      
+    ),
+    
+    # ---- Subset Data ----
+    nav_panel("Subset Data",
+              
+              sidebarPanel(fluidRow(
+                column(4,input_switch("drop_0val", 
+                                      "Drop Colums with Null Value", 
+                                      value = TRUE)), 
+                column(3, input_switch("normalize", "Normalize Data", value = TRUE))
+              ),
+              selectInput("elements", "Select elements:",
+                          choices = NULL, multiple = TRUE)
+              ),
+              
+              mainPanel(reactableOutput("subset_data"))),
+    
+    # ---- Analytics ----
+    nav_panel("Analytics",
+              sidebarPanel(uiOutput("samples"),
+                           uiOutput("dynamic_checkboxes")),
+              mainPanel(reactableOutput("sample_wise_list"),
+                        reactableOutput("sample_wise_list_analysied"))
+              )
+    
+    
+    
+  )
 )
