@@ -46,7 +46,8 @@ fluidPage(
               ),
     # ---- Summary List ----
     nav_panel("Summary",
-              reactableOutput("final_sample_wise_df"))
+              reactableOutput("final_sample_wise_df"),
+              reactableOutput("final_sample_wise_analytics"))
     
     
     

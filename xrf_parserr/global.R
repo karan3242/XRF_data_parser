@@ -1,6 +1,6 @@
 pkgs <- c("shiny", "readr", "tidyverse",
-          "viridis", "plotly", "writexl",
-          "CC","knitr","shinythemes", "bslib", "readxl",
+          "plotly", "writexl",
+          "CC","shinythemes", "bslib", "readxl",
           "reactable")
 pkginst <- lapply(pkgs, library, character.only = TRUE)
 theme_set(theme_classic())

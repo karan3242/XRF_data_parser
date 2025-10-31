@@ -246,9 +246,13 @@ function(input, output, session) {
     x <- selected_list_item_read()
     round(
     data.frame(t(data.frame(
-      "Mean"= apply(x[select_elements(x)], 2, mean, na.rm=TRUE),
+      "Min"= apply(x[select_elements(x)], 2, min, na.rm=TRUE),
+      "Q1" = apply(x[select_elements(x)], 2, quantile,probs = 0.25, na.rm=TRUE),
       "Median" = apply(x[select_elements(x)], 2, median, na.rm=TRUE),
-      "Standard Deviantion" = apply(x[select_elements(x)], 2, sd, na.rm=TRUE)
+      "Mean"= apply(x[select_elements(x)], 2, mean, na.rm=TRUE),
+      "Q3" = apply(x[select_elements(x)], 2, quantile,probs = 0.75, na.rm=TRUE),
+      "Max"= apply(x[select_elements(x)], 2, max, na.rm=TRUE),
+      "StDev" = apply(x[select_elements(x)], 2, sd, na.rm=TRUE)
     ))), 3)
   })
   
@@ -329,9 +333,39 @@ function(input, output, session) {
     final_df <- as.data.frame(dplyr::bind_rows(list))
     return(final_df)
   })
+  # From final_sample_List Create a list of analtics.
+  final_sample_wise_analytics <- reactive({
+    list_xrf <- req(final_sample_wise_list())
+    
+    test <- lapply(list_xrf, \(x){
+      Lab_ID <- unique(x$Lab_ID)
+      list_df <- round(data.frame(t(data.frame(
+        "Min"= apply(x[select_elements(x)], 2, min, na.rm=TRUE),
+        "Q1" = apply(x[select_elements(x)], 2, quantile,probs = 0.25, na.rm=TRUE),
+        "Median" = apply(x[select_elements(x)], 2, median, na.rm=TRUE),
+        "Mean"= apply(x[select_elements(x)], 2, mean, na.rm=TRUE),
+        "Q3" = apply(x[select_elements(x)], 2, quantile,probs = 0.75, na.rm=TRUE),
+        "Max"= apply(x[select_elements(x)], 2, max, na.rm=TRUE),
+        "StDev" = apply(x[select_elements(x)], 2, sd, na.rm=TRUE)
+      ))),3)
+      list_df$Analytics <- rownames(list_df)
+      rownames(list_df) <- NULL
+      list_df$Lab_ID <- rep(Lab_ID, nrow(list_df))
+      return(list_df)
+      
+    })
+    
+    test_df <- dplyr::bind_rows(test)
+    
+    test_df <- test_df[,c("Lab_ID", "Analytics", select_elements(test_df))]
+  })
   
+  #Table Output
   output$final_sample_wise_df <- renderReactable({
     reactable(clean_colnames(final_sample_wise_df()))
+  })
+  output$final_sample_wise_analytics <- renderReactable({
+    reactable(clean_colnames(final_sample_wise_analytics()))
   })
   
 }
