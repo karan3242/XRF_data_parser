@@ -41,8 +41,13 @@ fluidPage(
                            uiOutput("dynamic_checkboxes"),
                            uiOutput("elements2")),
               mainPanel(reactableOutput("sample_wise_list"),
-                        reactableOutput("sample_wise_list_analysied"))
-              )
+                        reactableOutput("sample_wise_list_analysied")
+                        )
+              ),
+    # ---- Summary List ----
+    nav_panel("Summary",
+              reactableOutput("final_sample_wise_df"))
+    
     
     
     

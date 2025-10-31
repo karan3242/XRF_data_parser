@@ -1,5 +1,13 @@
 ##### Main Function #####
 function(input, output, session) {
+  
+  # ---- Data Persistence in Analytics ----
+  # Data Persistence values
+  rv <- reactiveValues(
+    selected_rows_store = list(),
+    elements_store = list()
+  )
+  
   # ----- Raw Data ----
   raw_data <- eventReactive(input$raw_csv,{
     req(input$raw_csv)
@@ -144,19 +152,34 @@ function(input, output, session) {
   selected_list_item <- reactive({sample_wise_list()[[input$samples2]]})
   
   # Use renderUI to create the checkboxes dynamically
+  # Modified output$dynamic_checkboxes
   output$dynamic_checkboxes <- renderUI({
     current_df <- selected_list_item()
+    current_sample_id <- input$samples2 # Get the current sample ID
     
     choices <- current_df$Reading
-
+    
+    # Check if a saved selection exists for this sample
+    saved_selection <- rv$selected_rows_store[[current_sample_id]]
+    
+    # Use the saved selection if it exists, otherwise use all choices
+    initial_selected <- if (is.null(saved_selection)) choices else saved_selection
+    
     checkboxGroupInput(
       inputId = "selected_rows",
-      label = paste("Available IDs in", input$df_choice),
+      label = paste("Available IDs in", current_sample_id), # Use current_sample_id instead of input$df_choice
       choices = choices,
-      selected = choices
+      selected = initial_selected
     )
-    
   })
+  
+  # Observe changes in selected rows and save them
+  observeEvent(input$selected_rows, {
+    current_sample_id <- input$samples2
+    if (!is.null(current_sample_id)) {
+      rv$selected_rows_store[[current_sample_id]] <- input$selected_rows
+    }
+  }, ignoreNULL = FALSE, ignoreInit = TRUE) # ignoreInit prevents saving 'NULL' on startup
   
   # Creata a Sliletcize for Element selection
   elements_sub <- reactive({
@@ -164,18 +187,34 @@ function(input, output, session) {
     get_elements(selected_list_item())
   })
   
+  # Modified output$elements2
   output$elements2 <- renderUI({
-    
-    req(elements_sub())
-    
-    elements <- get_elements(sample_wise_list())
-    
-    selectizeInput("elements2",
-                "Select elements",
-                choices =  elements_sub(),
-                selected =  elements_sub(),
-                multiple = TRUE)
-  })
+  req(elements_sub())
+  current_sample_id <- input$samples2 # Get the current sample ID
+  
+  all_elements <- elements_sub()
+  
+  # Check if a saved selection exists for this sample
+  saved_selection <- rv$elements_store[[current_sample_id]]
+  
+  # Use the saved selection if it exists, otherwise use all elements
+  initial_selected <- if (is.null(saved_selection)) all_elements else saved_selection
+  
+  selectizeInput("elements2",
+    "Select elements",
+    choices = all_elements,
+    selected = initial_selected,
+    multiple = TRUE
+  )
+})
+  
+  # Observe changes in element selections and save them
+  observeEvent(input$elements2, {
+    current_sample_id <- input$samples2
+    if (!is.null(current_sample_id)) {
+      rv$elements_store[[current_sample_id]] <- input$elements2
+    }
+  }, ignoreNULL = FALSE, ignoreInit = TRUE)
   
   # Created Filedred Sample table
   selected_list_item_read <- reactive({
@@ -213,7 +252,6 @@ function(input, output, session) {
     ))), 3)
   })
   
-  
   # Table Outputes
   output$sample_wise_list <-  renderReactable({
     reactable(clean_colnames(selected_list_item_read()))
@@ -222,6 +260,78 @@ function(input, output, session) {
     reactable(clean_colnames(slected_list_item_analysized()))
   })
   
+  # ---- Summary List ----
   
+  # Get Persistence List of Items
+  final_sample_wise_list <- reactive({
+    # Depend on the storage to rerun whenever a selection for *any* sample changes
+    req(length(rv$selected_rows_store) > 0) 
+    req(length(rv$elements_store) > 0)
+    
+    all_samples_list <- req(sample_wise_list())
+    
+    # This will be the list of all final, filtered data frames
+    final_list <- list()
+    
+    # Iterate over every sample ID
+    for (sample_id in names(all_samples_list)) {
+      df <- all_samples_list[[sample_id]]
+      
+      # 1. Get the current selections for this sample from persistent storage
+      
+      # Get the selected rows (Reading IDs). Default to all if not saved yet.
+      selected_rows <- rv$selected_rows_store[[sample_id]]
+      if (is.null(selected_rows)) {
+        selected_rows <- df$Reading
+      }
+      
+      # Get the selected elements. Default to all elements if not saved yet.
+      selected_elements <- rv$elements_store[[sample_id]]
+      if (is.null(selected_elements)) {
+        # Use the function you defined to get all possible elements for this sample
+        selected_elements <- get_elements(df)
+      }
+      
+      # 2. Filter the data frame
+      
+      # Filter by Reading
+      df <- df[df$Reading %in% selected_rows, , drop = FALSE]
+      
+      # Filter by Element Columns
+      elements_pattern <- paste0("^", selected_elements, ".Concentration$", collapse = "|")
+      element_cols <- grep(elements_pattern, names(df), value = TRUE)
+      
+      # 🌟 FIX: Explicitly include Lab_ID and Reading
+      cols_to_keep <- c("Lab_ID", "Reading", element_cols)
+      
+      # Ensure all columns to keep actually exist in df (safeguard)
+      cols_to_keep <- intersect(cols_to_keep, names(df))
+      
+      # Keep the necessary columns
+      df <- df[, cols_to_keep, drop = FALSE]
+      
+      # 3. Apply normalization again if necessary
+      # Note: Ensure this step is consistent with your original logic in 'selected_list_item_read'
+      if(input$normalize){
+        df <- normlization_fun(df)
+      }
+      
+      # 4. Add the final filtered DF to the list
+      final_list[[sample_id]] <- df
+    }
+    
+    return(final_list)
+  })
+  
+  # Collaps List into dataframe.
+  final_sample_wise_df <- reactive({
+    list <- req(final_sample_wise_list())
+    final_df <- as.data.frame(dplyr::bind_rows(list))
+    return(final_df)
+  })
+  
+  output$final_sample_wise_df <- renderReactable({
+    reactable(clean_colnames(final_sample_wise_df()))
+  })
   
 }
