@@ -1,7 +1,5 @@
 # 🔬 XRF Data Parsing Tool for OLYMPUS VANTA pXRF Chemistry Datasets
 
-![](https://www.portaspecs.com/wp-content/uploads/2019/05/sized_m-series_2_1024x1024.jpg)
-
 This Shiny application is designed to **streamline the analysis of XRF datasets** exported from the **OLYMPUS VANTA pXRF** device using the Geo Chem method. It simplifies complex raw data into a clean, normalized, and insightful format for geochemical analysis.
 
 ---
@@ -10,36 +8,11 @@ This Shiny application is designed to **streamline the analysis of XRF datasets*
 
 ## Prerequisites
 
-<div style="display: flex; align-items: flex-start; gap: 20px;">
-    
-    <div style="flex: 2;">
-        
-        ### Prerequisites
-
-        To use this application, you must have the following:
-        * **OLYMPUS VANTA pXRF device** for data acquisition.
-        * Data must be exported using the **Geo Chem export method**.
-        * **`pdflatex`** installed on your system for the report generation function to compile correctly.
-
-        ### Data Preparation
-
-        Ensure your CSV export strictly adheres to the **Geo Chem format**. Specifically:
-        * The **Item Notes** column must be consistently labeled as `LAB_ID`.
-        * The `LAB_ID` values should contain both letters and numbers (e.g., `S-101`, `A-2B`) for string-value compatibility and optimal parsing.
-        
-    </div>
-
-    <div style="flex: 1; text-align: center;">
-        <img src="https://www.portaspecs.com/wp-content/uploads/2019/05/sized_m-series_2_1024x1024.jpg" alt="Image of OLYMPUS VANTA pXRF device" style="max-width: 100%; height: auto; border-radius: 5px; margin-top: 10px;">
-        <p style="font-size: 0.8em; color: #666;">OLYMPUS VANTA pXRF device</p>
-    </div>
-
-</div>
+![](https://www.portaspecs.com/wp-content/uploads/2019/05/sized_m-series_2_1024x1024.jpg)
 
 To use this application, you must have the following:
 * **OLYMPUS VANTA pXRF device** for data acquisition.
 * Data must be exported using the **Geo Chem export method**.
-* **`pdflatex`** installed on your system for the report generation function to compile correctly.
 
 ## Data Preparation
 
