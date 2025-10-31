@@ -37,8 +37,9 @@ fluidPage(
     
     # ---- Analytics ----
     nav_panel("Analytics",
-              sidebarPanel(uiOutput("samples"),
-                           uiOutput("dynamic_checkboxes")),
+              sidebarPanel(uiOutput("samples2"),
+                           uiOutput("dynamic_checkboxes"),
+                           uiOutput("elements2")),
               mainPanel(reactableOutput("sample_wise_list"),
                         reactableOutput("sample_wise_list_analysied"))
               )

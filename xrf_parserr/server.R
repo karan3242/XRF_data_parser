@@ -104,14 +104,21 @@ function(input, output, session) {
   
   # Creates List of Each Sample with its own data frame.
   sample_wise_list <- reactive({
+    req(input$drop_0val)
+    req(input$normalize)
     samples <- req(input$samples)
     df <- req(subset_data_clean())
     
     list_xrf <- setNames(lapply(seq(length(samples)), \(x){
       
       df <- df[df$Lab_ID == samples[x],]
-      df <- drop_0cols(df)
-      df <- normlization_fun(df)
+      if(input$drop_0val){
+        df <- drop_0cols(df)
+      }
+      if(input$normalize){
+        df <- normlization_fun(df)
+      }
+      
       df$Reading <- seq(max(row(df)))
       return(df)
     }), samples)
@@ -124,9 +131,8 @@ function(input, output, session) {
     return(names(df))
   })
   
-  
   # Create a Drop down for selecting Sample lab ids
-  output$samples <- renderUI({
+  output$samples2 <- renderUI({
     req(samples())
     selectInput("samples2",
                 "Selecte Sample",
@@ -142,23 +148,7 @@ function(input, output, session) {
     current_df <- selected_list_item()
     
     choices <- current_df$Reading
-    
-    # Create a list of checkboxInput elements
-    checkbox_list <- lapply(
-      X = choices,
-      FUN = function(i) {
-        # The inputId must be unique for each checkbox.
-        # However, for convenience in reading the result (Step 3), 
-        # we will use the same input ID for all, but use a list of values.
-        # A simpler approach is to create a single checkboxGroupInput:
-        checkboxGroupInput(
-          inputId = "selected_rows",
-          label = NULL, # No label for the group, since each item has a label
-          choices = choices,
-          selected = NULL # Start with no selections
-        )
-      }
-    )
+
     checkboxGroupInput(
       inputId = "selected_rows",
       label = paste("Available IDs in", input$df_choice),
@@ -168,15 +158,50 @@ function(input, output, session) {
     
   })
   
+  # Creata a Sliletcize for Element selection
+  elements_sub <- reactive({
+    req(selected_list_item())
+    get_elements(selected_list_item())
+  })
+  
+  output$elements2 <- renderUI({
+    
+    req(elements_sub())
+    
+    elements <- get_elements(sample_wise_list())
+    
+    selectizeInput("elements2",
+                "Select elements",
+                choices =  elements_sub(),
+                selected =  elements_sub(),
+                multiple = TRUE)
+  })
+  
+  # Created Filedred Sample table
   selected_list_item_read <- reactive({
+    req(input$normalize)
+    req(input$elements2)
     req(input$selected_rows)
     req(selected_list_item())
     
+    elements <- input$elements2
     df <- selected_list_item()
-    df[df$Reading %in% input$selected_rows,]
+    df <- df[df$Reading %in% input$selected_rows,]
+    
+    cols_to_keep <- grep(paste0("^", elements,".Concentration$", collapse = "|"), names(df), value = TRUE)
+    valid_cols <- c("Lab_ID", "Reading", cols_to_keep)
+    df <- df[, valid_cols]
+    
+    if(input$normalize){
+      df <- normlization_fun(df)
+    }
+    
+    df <- df[, cols_to_keep]
+    return(df)
     
   })
   
+  # Creata Anlayised table Req selected_list_item_read()
   slected_list_item_analysized <- reactive({
     req(selected_list_item_read())
     x <- selected_list_item_read()
@@ -189,6 +214,7 @@ function(input, output, session) {
   })
   
   
+  # Table Outputes
   output$sample_wise_list <-  renderReactable({
     reactable(clean_colnames(selected_list_item_read()))
   })
