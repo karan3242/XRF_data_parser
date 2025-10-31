@@ -360,12 +360,36 @@ function(input, output, session) {
     test_df <- test_df[,c("Lab_ID", "Analytics", select_elements(test_df))]
   })
   
+  # Filtering Analysis Types to display and save.
+  final_sample_wise_analytics_filtered <- reactive({
+    analytics_df <- req(final_sample_wise_analytics())
+    analytics <- req(input$Analytics)
+    analytics_df[analytics_df$Analytics %in% analytics,]
+  })
+  
   #Table Output
   output$final_sample_wise_df <- renderReactable({
     reactable(clean_colnames(final_sample_wise_df()))
   })
   output$final_sample_wise_analytics <- renderReactable({
-    reactable(clean_colnames(final_sample_wise_analytics()))
+    reactable(clean_colnames(final_sample_wise_analytics_filtered()))
   })
+  
+  # ---- Doanload Handler ----
+  
+  output$save_analysis <- downloadHandler(
+    filename = paste0("xrf_analysis", Sys.Date(),".xlsx"),
+    content = \(file){
+      write_xlsx(
+        list(
+          "Raw Data" = req(raw_data_filtred()),
+          "Subset Data" = req(clean_colnames(subset_data_clean())),
+          "Cleaned Data" = req(clean_colnames(final_sample_wise_df())),
+          "Analytical Data" = req(clean_colnames(final_sample_wise_analytics_filtered()))
+        ),
+        path = file
+      )
+    }
+  )
   
 }

@@ -46,8 +46,16 @@ fluidPage(
               ),
     # ---- Summary List ----
     nav_panel("Summary",
-              reactableOutput("final_sample_wise_df"),
-              reactableOutput("final_sample_wise_analytics"))
+              sidebarPanel(
+                selectInput("Analytics", "Filter Analytics",
+                            choices = c("Min", "Q1", "Median", "Mean", "Q3", "Max", "StDev"),
+                            selected = c("Min", "Q1", "Median", "Mean", "Q3", "Max", "StDev"),
+                            multiple = TRUE),
+                downloadButton("save_analysis", "Save Analysis")
+              ),
+              mainPanel(reactableOutput("final_sample_wise_df"),
+                        reactableOutput("final_sample_wise_analytics"))
+              )
     
     
     
