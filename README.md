@@ -1,93 +1,100 @@
-# XRF Data Parsing Tool for OLYMPUS VANTA pXRF Chemistry Datasets
+# 🔬 XRF Data Parsing Tool for OLYMPUS VANTA pXRF Chemistry Datasets
 
 ![](https://www.portaspecs.com/wp-content/uploads/2019/05/sized_m-series_2_1024x1024.jpg)
 
-# Requirements
+This Shiny application is designed to **streamline the analysis of XRF datasets** exported from the **OLYMPUS VANTA pXRF** device using the Geo Chem method. It simplifies complex raw data into a clean, normalized, and insightful format for geochemical analysis.
 
--   OLYMPUS VANTA pXRF device
--   Geo Chem export method
--   pdflatex should be installed for the report function to compile correctly.
+---
 
-Ensure the CSV export follows the Geo Chem format with Item notes labeled as `LAB_ID`. The ID should contain both letters and numbers for string value compatibility.
+# ⚙️ Requirements & Data Setup
 
-# XRF Chemistry Analyser
-## Features
+## Prerequisites
 
-This tool is tailored to parse XRF databases exported in the Geo Chem format from the OLYMPUS VANTA pXRF. It selectively retains element composition and item IDs for analysis.
+<div style="display: flex; align-items: flex-start; gap: 20px;">
+    
+    <div style="flex: 2;">
+        
+        ### Prerequisites
 
-The following are the functions of each Tab and sub Tab and the sequence of data parsing.
+        To use this application, you must have the following:
+        * **OLYMPUS VANTA pXRF device** for data acquisition.
+        * Data must be exported using the **Geo Chem export method**.
+        * **`pdflatex`** installed on your system for the report generation function to compile correctly.
 
-### Primary Data
+        ### Data Preparation
 
-Displaced raw data from the XRF chemistry output, with `<LOD` values being replaced with 0.
+        Ensure your CSV export strictly adheres to the **Geo Chem format**. Specifically:
+        * The **Item Notes** column must be consistently labeled as `LAB_ID`.
+        * The `LAB_ID` values should contain both letters and numbers (e.g., `S-101`, `A-2B`) for string-value compatibility and optimal parsing.
+        
+    </div>
 
-### Data Overview
+    <div style="flex: 1; text-align: center;">
+        <img src="https://www.portaspecs.com/wp-content/uploads/2019/05/sized_m-series_2_1024x1024.jpg" alt="Image of OLYMPUS VANTA pXRF device" style="max-width: 100%; height: auto; border-radius: 5px; margin-top: 10px;">
+        <p style="font-size: 0.8em; color: #666;">OLYMPUS VANTA pXRF device</p>
+    </div>
 
-Provides control for selecting lab items and elements.
-Selecting normalized data, normalizes all reading of selected elements to 100% across each reading. This value determines all the following tables and calculations.
+</div>
 
-#### Selected Items
+To use this application, you must have the following:
+* **OLYMPUS VANTA pXRF device** for data acquisition.
+* Data must be exported using the **Geo Chem export method**.
+* **`pdflatex`** installed on your system for the report generation function to compile correctly.
 
-This sub-tab provides elemental concentrations of selected elements, in either standard or normalized format.
-The values of this table influence all the following tables.
+## Data Preparation
 
-#### Elements Overview
+Ensure your CSV export strictly adheres to the **Geo Chem format**. Specifically:
+* The **Item Notes** column must be consistently labeled as `LAB_ID`.
+* The `LAB_ID` values should contain both letters and numbers (e.g., `S-101`, `A-2B`) for string-value compatibility and optimal parsing.
 
-Based on the data seen in the "Selected Items" tab, shows the mean, standard deviation, and minimum and maximum values for the multiple readings of each item.
+---
 
-#### Deviations
+# ✨ Features & Workflow
 
-Based on data from "Elements Overview", this show a table with items and elements with standard divination higher than a threshold set by the slider.
+This tool is specifically tailored to parse OLYMPUS VANTA pXRF Geo Chem databases, focusing on selectively retaining element compositions and item IDs for downstream analysis.
 
-#### Z-Score
+## How to Use: Tab-by-Tab Workflow
 
-Based on data from "Selected Items", show a table with individual readings of items with elements with a z-score of each elements reading, higher than a threshold set by the slider.
+The application guides you through a sequential data processing workflow across four main tabs:
 
-### Item Details
+### 1. Raw Data 📥
 
-Allows for parsing though multiple readings of each item individually.
-The Item of interest can be selected using the drop-down.
+This is your **initial loading and pre-filter stage**.
+* **Load Data:** Use the input feature to upload your Geo Chem CSV file.
+* **Initial Filtering:** Apply basic filters by **Sample Name** and the **Analysis Method** used to narrow down the dataset.
 
-#### Item Data
+### 2. Subset Data 🧼
 
-Pulls data from "Selected Reading" and filters in the Item selected from the drop down menu.
-It also Plots the elemental percentage of each reading as a Box plot.
-The elements shown can be selected suing check boxes.
+This tab presents a **cleaned and refined dataset** ready for analysis.
+* **Automatic Cleanup:** Only the essential `LAB_ID`s and element concentration columns are retained.
+* **Processing Switches (Sidebar):** Use the switches in the sidebar to:
+    * **Drop Zero Columns:** Automatically remove element columns where the sum of readings is 0 (i.e., elements that were not detected).
+    * **Normalize Data:** Apply normalization to the remaining element readings for comparative analysis.
+* **Manual Element Removal:** You can remove additional unwanted element columns by deselecting them from the **Input Selection** in the sidebar.
 
-#### Items Summary
+### 3. Analytics 📈
 
-Pulls data from "Item Data" and elements with a standard deviations  and the table with element concentrations with their related Z scores, along with the Standard deviation, and the range between the minimum and maximum values.
-The text summary of the elements is also presented.
+This is the **visualization and individual sample inspection** stage.
+* **Individual Item Filtering:** Select individual `LAB_ID` items from the dropdown to view their specific readings and analytics.
+* **Interactive Visualizations:** Review plots and tables showing the composition for the selected sample(s).
+    !
 
-### Selected Readings
+### 4. Summary & Export 💾
 
-Enables the deselection of readings which are deemed as out liars.
+This final tab aggregates your key findings and handles data output.
+* **Aggregated Results:** Displays a summary of the `LAB_ID` items and their analytics that you selected and finalized in the **Analytics** tab.
+* **Analytics Selection (Sidebar):** Choose the specific type of analytics (e.g., summary statistics, specific ratios) you wish to include in the final report via the **Input Select** tab in the sidebar.
+* **Saving Data:** When the **Save** button is clicked, the application exports a compilation of:
+    * The final, processed reading values.
+    * The selected analytics results.
+    * The original **Raw Data** table.
+    * The cleaned **Subset Data** table.
 
-#### Selected Reading data
+---
 
-Pulls from the table "Selected Items", and filters out all the reading which were deselected.
+# 🌳 Contribution & Versioning
 
+This repository utilizes two main branches:
 
-#### Summary of Reading data
-
-Pulls from the table "Selected Reading data", and gives summary in the form of mean, standard deviation, and minimum and maximum values from the multiple readings of each item.
-
-### Plot
-
-Generates grouped bar plots depicting averages and standard deviation errors for each selected element and item based on "Summary of Reading data".
-
-It also enables the download of tables of "Primary Data", "Selected Items", "Selected Readings" and "Summary of Reading data", as worksheets in a Excel file.
-
-The Generate Report Button creates a item wise report PDF document, with the summary data and box plot of each item and an Item classification table.
-
-# Beam Spectra Plotter
-
-This is a simple plotting functions for XRF beam spectra data. This only works with 2 beams, of alloy Plus. A third beam option is in the works.
-The drop-down menu is used for selecting the reading number. Use the sliders to set X and Y axis limits and use other options to shave the image.
-The association of the reading number with the Lab id needs to be done manually. I am working on a program that will do that automatically in the future.
-
-Note that the Readings in the Beam spectra refer to the `Reading #` and `Test Lable`. they do not refer to the `reading` column.
-
-----
-
-This tool streamlines the analysis process for XRF data sets, offering flexible filtering options and insightful visualizations.
+* **`master`:** This is the **stable branch** currently used for critical lab work. **Do not push directly to this branch.**
+* **`experimental`:** Please push all new features, bug fixes, and development changes to the `experimental` branch. Pull requests will be reviewed and merged into `master` after validation.

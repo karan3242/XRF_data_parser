@@ -55,7 +55,10 @@ fluidPage(
               ),
               mainPanel(reactableOutput("final_sample_wise_df"),
                         reactableOutput("final_sample_wise_analytics"))
-              )
+              ),
+    # ---- About Page ----
+    nav_panel("Help",
+              includeMarkdown("../README.md"))
     
     
     
