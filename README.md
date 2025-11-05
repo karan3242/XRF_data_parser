@@ -47,10 +47,10 @@ This tab presents a **cleaned and refined dataset** ready for analysis.
 
 ### 3. Analytics 📈
 
-This is the **visualization and individual sample inspection** stage.
+This is the **individual sample inspection** stage.
 * **Individual Item Filtering:** Select individual `LAB_ID` items from the dropdown to view their specific readings and analytics.
-* **Interactive Visualizations:** Review plots and tables showing the composition for the selected sample(s).
-    !
+* **Interactive Visualizations:** Review table showing the composition for the selected sample(s).
+
 
 ### 4. Summary & Export 💾
 
