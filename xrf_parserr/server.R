@@ -241,7 +241,7 @@ function(input, output, session) {
   })
   
   # Creata Anlayised table Req selected_list_item_read()
-  slected_list_item_analysized <- reactive({
+  selected_list_item_analysized <- reactive({
     req(selected_list_item_read())
     x <- selected_list_item_read()
     round(
@@ -256,12 +256,18 @@ function(input, output, session) {
     ))), 3)
   })
   
-  # Table Outputes
-  output$sample_wise_list <-  renderReactable({
-    reactable(clean_colnames(selected_list_item_read()))
+  selected_list_item_combined <- reactive({
+    req(selected_list_item_read())
+    req(selected_list_item_analysized())
+    dplyr::bind_rows(selected_list_item_read(),selected_list_item_analysized())
   })
+  # Table Outputes
+  # output$sample_wise_list <-  renderReactable({
+  #   reactable(clean_colnames(selected_list_item_read()))
+  # })
   output$sample_wise_list_analysied <-  renderReactable({
-    reactable(clean_colnames(slected_list_item_analysized()))
+    # reactable(clean_colnames(selected_list_item_analysized()))
+    reactable(clean_colnames(selected_list_item_combined()))
   })
   
   # ---- Summary List ----
