@@ -14,7 +14,7 @@ fluidPage(
                     choices = NULL, multiple = TRUE),
         strong("This is your initial loading and pre-filter stage."),
         tags$ul(
-          tags$li("Load Data: Use the input feature to upload your Geo Chem CSV file."),
+          tags$li("Load Data: Use the input feature to upload your Geo Chem CSV or Excel file (Raw data file should be on Sheet 1)."),
           tags$li("Initial Filtering: Apply basic filters by Sample Name and the Analysis Method used to narrow down the dataset.")
         )
       ),
