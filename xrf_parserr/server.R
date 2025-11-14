@@ -56,7 +56,8 @@ function(input, output, session) {
     })
   
   
-  # ---- Subset Data ----
+
+# Subset data -------------------------------------------------------------
 
   subset_data <- reactive({
     raw_data <- req(raw_data_filtred())
@@ -104,6 +105,7 @@ function(input, output, session) {
     if(input$drop_0val){
       output <- drop_0cols(output)
     }
+    
     if(input$normalize){
       output <- normlization_fun(output)
     }
@@ -117,12 +119,11 @@ function(input, output, session) {
     reactable(clean_colnames(subset_data_clean()),showPageSizeOptions = TRUE)
   })
 
-  # ---- Analytics ----
+
+# Analytics ---------------------------------------------------------------
 
   # Creates List of Each Sample with its own data frame.
   sample_wise_list <- reactive({
-    req(input$drop_0val)
-    req(input$normalize)
     samples <- req(input$samples)
     df <- req(subset_data_clean())
 
@@ -227,7 +228,6 @@ function(input, output, session) {
 
   # Created Filedred Sample table
   selected_list_item_read <- reactive({
-    req(input$normalize)
     req(input$elements2)
     req(input$selected_rows)
     req(selected_list_item())
@@ -276,7 +276,8 @@ function(input, output, session) {
     reactable(clean_colnames(selected_list_item_combined()))
   })
 
-  # ---- Summary List ----
+
+# Summary List ------------------------------------------------------------
 
   # Get Persistence List of Items
   final_sample_wise_list <- reactive({

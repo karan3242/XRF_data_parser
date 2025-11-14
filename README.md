@@ -16,9 +16,11 @@ To use this application, you must have the following:
 
 ## Data Preparation
 
-Ensure your CSV export strictly adheres to the **Geo Chem format**. Specifically:
+Ensure your CSV or XLSX export strictly adheres to the **Geo Chem format**
+Specifically:
 * The **Item Notes** column must be consistently labeled as `LAB_ID`.
 * The `LAB_ID` values should contain both letters and numbers (e.g., `S-101`, `A-2B`) for string-value compatibility and optimal parsing.
+* If The file is XLSX make sure that the data read is on Sheet 1
 
 ---
 
