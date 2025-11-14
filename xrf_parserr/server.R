@@ -1,14 +1,19 @@
 ##### Main Function #####
 function(input, output, session) {
 
-  # ---- Data Persistence in Analytics ----
+
+# Data Persistence in Analytics -------------------------------------------
+
   # Data Persistence values
   rv <- reactiveValues(
     selected_rows_store = list(),
     elements_store = list()
   )
 
-  # ----- Raw Data ----
+
+# Raw data ----------------------------------------------------------------
+
+
   raw_data <- eventReactive(input$raw_csv, {
     req(input$raw_csv)
     read_file(input$raw_csv$datapath)
@@ -49,6 +54,8 @@ function(input, output, session) {
 
     reactable(raw_data_filtred(), showPageSizeOptions = TRUE)
     })
+  
+  
   # ---- Subset Data ----
 
   subset_data <- reactive({

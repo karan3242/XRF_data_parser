@@ -7,9 +7,17 @@ theme_set(theme_classic())
 
 # ---- Raw Data Loading -----
 # Function to Load Files
-read_file <- \(file_path){
-  df <- read.csv(file = file_path)
-  if(!("Lab_ID" %in% names(df))){stop("Colum Lab_ID no avilable")}
+read_file <- \(file_path) {
+  if(grepl("\\.csv$", file_path, ignore.case = TRUE)) {
+    df <- read.csv(file = file_path)
+  } else if(grepl("\\.xlsx$|\\.xls$", file_path, ignore.case = TRUE)) {
+    df <- readxl::read_excel(path = file_path)
+  }
+  
+  if(!("Lab_ID" %in% names(df))) {
+    warning("Colum Lab_ID no avilable")
+    }
+  
   return(df)
   }
 
