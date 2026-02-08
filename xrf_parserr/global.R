@@ -10,18 +10,20 @@ theme_set(theme_classic())
 # Function to Load Files --------------------------------------------------
 
 read_file <- \(file_path) {
-  if(grepl("\\.csv$", file_path, ignore.case = TRUE)) {
-    df <- readr::read_csv(file = file_path)
-  } else if(grepl("\\.xlsx$|\\.xls$", file_path, ignore.case = TRUE)) {
-
-    sheet_name <- readxl::excel_sheets(file_path)
-    df <- readxl::read_excel(path = file_path, sheet = sheet_name[1])
-
+  ext <- tools::file_ext(file_path)
+  
+  df <- switch(tolower(ext),
+               "csv"  = readr::read_csv(file_path),
+               "xlsx" = readxl::read_excel(path = file_path),
+               "xls"  = readxl::read_excel(path = file_path),
+               stop("Unsupported file extension")
+  ) %>% 
+    mutate(across(contains("Concentration"), ~ as.numeric(as.character(.x))))
+  
+  if (!("Lab_ID" %in% names(df))) {
+    warning(paste("Column 'Lab_ID' not available in file:", file_path))
   }
   
-  if(!("Lab_ID" %in% names(df))) {
-    warning("Colum Lab_ID no avilable")
-    }
   return(df)
   }
 

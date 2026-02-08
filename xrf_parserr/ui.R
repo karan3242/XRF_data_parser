@@ -7,7 +7,7 @@ fluidPage(
     nav_panel(
       "Raw Data",
       sidebarPanel(
-        fileInput("raw_csv", "Choose File"),
+        fileInput("raw_csv", "Choose File", multiple = TRUE, accept = c(".csv", ".xlsx", ".xls")),
         selectInput("samples", "Select Samples:",
                     choices = NULL, multiple = TRUE),
         selectInput("methods", "Select Methods:",

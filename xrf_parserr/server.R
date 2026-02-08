@@ -16,7 +16,9 @@ function(input, output, session) {
 
   raw_data <- eventReactive(input$raw_csv, {
     req(input$raw_csv)
-    read_file(input$raw_csv$datapath)
+    list_of_dfs <- purrr::map(input$raw_csv$datapath, read_file)
+    combined_df <- dplyr::bind_rows(list_of_dfs)
+    return(combined_df)
   })
 
   observeEvent(raw_data(), {
