@@ -10,24 +10,7 @@ theme_set(theme_classic())
 # Function to Load Files --------------------------------------------------
 
 read_file <- \(file_path) {
-<<<<<<< HEAD
-  if(grepl("\\.csv$", file_path, ignore.case = TRUE)) {
-    df <- read.csv(file = file_path)
-  } else if(grepl("\\.xlsx$|\\.xls$", file_path, ignore.case = TRUE)) {
-    sheet_name <- readxl::excel_sheets(file_path)
-    df <- readxl::read_excel(path = file_path, sheet = sheet_name[1])
-  }
-  
-  if(!("Lab_ID" %in% names(df))) {
-    warning("Colum Lab_ID no avilable")
-    }
-  
-  return(df)
-  }
 
-<<<<<<< HEAD
-
-=======
   ext <- tools::file_ext(file_path)
   
   df <- switch(tolower(ext),
@@ -45,36 +28,17 @@ read_file <- \(file_path) {
   return(df)
   }
 
->>>>>>> experimental
-# Function Select Elements ------------------------------------------------
-
-## Function Slectes Colums which are 
-select_elements <- \(df){grep(".Concentration", names(df), value = TRUE)}
-## Function Gets Element names
-get_elements <- \(df){gsub("\\.Concentration","",select_elements(df))}
-
-
-# Normalization function --------------------------------------------------
-
-<<<<<<< HEAD
-=======
-
-# Normalization function --------------------------------------------------
-
->>>>>>> experimental
-=======
 
 # Function Select Elements ------------------------------------------------
 
 ## Function Slectes Colums which are 
 select_elements <- \(df){grep("Concentration", names(df), value = TRUE)}
 ## Function Gets Element names
-get_elements <- \(df){gsub("\\.Concentration","",select_elements(df))}
+get_elements <- \(df){gsub(".Concentration","",select_elements(df))}
 
 
 # Normalization function --------------------------------------------------
 
->>>>>>> fb74b4cd06ee1d4efe1d5887214c2164fd42b42b
 normlization_fun <- \(df){
   Lab_ID <- df["Lab_ID"]
   rows <- df[, select_elements(df)]

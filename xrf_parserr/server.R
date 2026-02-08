@@ -60,7 +60,7 @@ function(input, output, session) {
       group_by(Lab_ID) %>% 
       dplyr::summarise("Description" = paste(unique(Description), sep = ";"),
                        "Notes" = paste(unique(Notes), sep = ";")) %>% 
-      dplyr::mutate(Description = ifelse(Description == "0", NA_character_, Description), Notes = ifelse(Notes == "NA", NA_character_, Notes)) %>% 
+      dplyr::mutate(Description = ifelse(Description %in% c("0", "NA"), NA_character_, Description), Notes = ifelse(Notes == "NA", NA_character_, Notes)) %>% 
       ungroup()
   })
 
