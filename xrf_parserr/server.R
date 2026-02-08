@@ -52,6 +52,17 @@ function(input, output, session) {
     raw_data <- raw_data[c(raw_data$`Method Name` %in% input$methods), ]
     return(raw_data)
   })
+  
+  notes_summary <- reactive({
+    req(raw_data_filtred())
+    raw_data_filtred() %>% 
+      select(Lab_ID, Description, Notes) %>% 
+      group_by(Lab_ID) %>% 
+      dplyr::summarise("Description" = paste(unique(Description), sep = ";"),
+                       "Notes" = paste(unique(Notes), sep = ";")) %>% 
+      dplyr::mutate(Description = ifelse(Description == "0", NA_character_, Description), Notes = ifelse(Notes == "NA", NA_character_, Notes)) %>% 
+      ungroup()
+  })
 
   output$raw_data <- renderReactable({
     reactable(raw_data_filtred(), showPageSizeOptions = TRUE)
@@ -357,7 +368,7 @@ function(input, output, session) {
 
     test <- lapply(list_xrf, \(x){
       Lab_ID <- unique(x$Lab_ID)
-      list_df <- round(data.frame(t(data.frame(
+      list_df <- data.frame(t(data.frame(
         "Min" = apply(x[select_elements(x)], 2, min, na.rm = TRUE),
         "Q1" = apply(x[select_elements(x)], 2, quantile,probs = 0.25, na.rm = TRUE),
         "Median" = apply(x[select_elements(x)], 2, median, na.rm = TRUE),
@@ -365,10 +376,11 @@ function(input, output, session) {
         "Q3" = apply(x[select_elements(x)], 2, quantile,probs = 0.75, na.rm = TRUE),
         "Max" = apply(x[select_elements(x)], 2, max, na.rm = TRUE),
         "StDev" = apply(x[select_elements(x)], 2, sd, na.rm = TRUE)
-      ))),3)
+      )))
       list_df$Analytics <- rownames(list_df)
       rownames(list_df) <- NULL
       list_df$Lab_ID <- rep(Lab_ID, nrow(list_df))
+      
       return(list_df)
 
     })
@@ -380,9 +392,12 @@ function(input, output, session) {
 
   # Filtering Analysis Types to display and save.
   final_sample_wise_analytics_filtered <- reactive({
+    req(notes_summary())
     analytics_df <- req(final_sample_wise_analytics())
     analytics <- req(input$Analytics)
-    analytics_df[analytics_df$Analytics %in% analytics,]
+    analytics_df <- analytics_df[analytics_df$Analytics %in% analytics,]
+    analytics_df <- left_join(analytics_df, notes_summary(), by = join_by(Lab_ID))
+    return(analytics_df)
   })
 
   #Table Output
