@@ -277,8 +277,8 @@ function(input, output, session) {
       "StDev" = apply(x[select_elements(x)], 2, sd, na.rm=TRUE)
     ))), 3)
     names(t) <- names(x)
-    t <- t %>% 
-      mutate(across(-1, ~ ifelse(is.finite(.x), .x, NA)))
+    y <- !apply(t, 2, is.finite)
+    t[y] <- NA_real_
     return(t)
   })
 
