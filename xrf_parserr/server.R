@@ -24,22 +24,22 @@ function(input, output, session) {
   observeEvent(raw_data(), {
     req(raw_data())
     raw_data <- raw_data()
-    # 1. Get the list of unique Lab_IDs
-    lab_ids <- unique(raw_data$Lab_ID)
-    methods <- unique(raw_data$`Method Name`)
+    # 1. Get the list of unique Lab_Ids
+    Lab_Ids <- unique(raw_data$Lab_Id)
+    methods <- unique(raw_data$`Method_Name`)
 
     # 2. Update the selectInput widget
     updateSelectInput(
       session = session,
       inputId = "samples",
-      # Set the new list of unique Lab_IDs as the choices
-      choices = lab_ids,
-      selected = lab_ids
+      # Set the new list of unique Lab_Ids as the choices
+      choices = Lab_Ids,
+      selected = Lab_Ids
     )
     updateSelectInput(
       session = session,
       inputId = "methods",
-      # Set the new list of unique Lab_IDs as the choices
+      # Set the new list of unique Lab_Ids as the choices
       choices = methods,
       selected = methods
     )
@@ -48,18 +48,18 @@ function(input, output, session) {
 
   raw_data_filtred <- reactive({
     raw_data <- raw_data()
-    raw_data <- raw_data[c(raw_data$Lab_ID %in% input$samples), ]
-    raw_data <- raw_data[c(raw_data$`Method Name` %in% input$methods), ]
+    raw_data <- raw_data[c(raw_data$Lab_Id %in% input$samples), ]
+    raw_data <- raw_data[c(raw_data$`Method_Name` %in% input$methods), ]
     return(raw_data)
   })
   
   notes_summary <- reactive({
     req(raw_data_filtred())
     raw_data_filtred() %>% 
-      select(Lab_ID, Description, Notes) %>% 
-      group_by(Lab_ID) %>% 
-      dplyr::summarise("Description" = paste(unique(Description), sep = ";"),
-                       "Notes" = paste(unique(Notes), sep = ";")) %>% 
+      select(Lab_Id, Description, Notes) %>% 
+      group_by(Lab_Id) %>% 
+      dplyr::summarise("Description" = paste(unique(Description),collapse = "; "),
+                       "Notes" = paste(unique(Notes),collapse = "; ")) %>% 
       dplyr::mutate(Description = ifelse(Description %in% c("0", "NA"), NA_character_, Description), Notes = ifelse(Notes == "NA", NA_character_, Notes)) %>% 
       ungroup()
   })
@@ -110,7 +110,7 @@ function(input, output, session) {
     elements <- input$elements
 
     cols_to_keep <- grep(paste0("^", elements,".Concentration$", collapse = "|"), names(subset_clean), value = TRUE)
-    valid_cols <- c("Lab_ID", cols_to_keep)
+    valid_cols <- c("Lab_Id", cols_to_keep)
     subset_clean <- subset_clean[, valid_cols]
 
     output <- subset_clean
@@ -142,7 +142,7 @@ function(input, output, session) {
 
     list_xrf <- setNames(lapply(seq_along(samples), \(x){
 
-      df <- df[df$Lab_ID == samples[x],]
+      df <- df[df$Lab_Id == samples[x],]
       if(input$drop_0val){
         df <- drop_0cols(df)
       }
@@ -250,7 +250,7 @@ function(input, output, session) {
     df <- df[df$Reading %in% input$selected_rows,]
 
     cols_to_keep <- grep(paste0("^", elements,".Concentration$", collapse = "|"), names(df), value = TRUE)
-    valid_cols <- c("Lab_ID", "Reading", cols_to_keep)
+    valid_cols <- c("Lab_Id", "Reading", cols_to_keep)
     df <- df[, valid_cols]
 
     if(input$normalize){
@@ -333,8 +333,8 @@ function(input, output, session) {
       elements_pattern <- paste0("^", selected_elements, ".Concentration$", collapse = "|")
       element_cols <- grep(elements_pattern, names(df), value = TRUE)
 
-      # FIX: Explicitly include Lab_ID and Reading
-      cols_to_keep <- c("Lab_ID", "Reading", element_cols)
+      # FIX: Explicitly include Lab_Id and Reading
+      cols_to_keep <- c("Lab_Id", "Reading", element_cols)
 
       # Ensure all columns to keep actually exist in df (safeguard)
       cols_to_keep <- intersect(cols_to_keep, names(df))
@@ -366,7 +366,7 @@ function(input, output, session) {
     list_xrf <- req(final_sample_wise_list())
 
     test <- lapply(list_xrf, \(x){
-      Lab_ID <- unique(x$Lab_ID)
+      Lab_Id <- unique(x$Lab_Id)
       list_df <- data.frame(t(data.frame(
         "Min" = apply(x[select_elements(x)], 2, min, na.rm = TRUE),
         "Q1" = apply(x[select_elements(x)], 2, quantile,probs = 0.25, na.rm = TRUE),
@@ -380,7 +380,7 @@ function(input, output, session) {
       list_df[y] <- NA_real_
       list_df$Analytics <- rownames(list_df)
       rownames(list_df) <- NULL
-      list_df$Lab_ID <- rep(Lab_ID, nrow(list_df))
+      list_df$Lab_Id <- rep(Lab_Id, nrow(list_df))
 
       return(list_df)
 
@@ -388,7 +388,7 @@ function(input, output, session) {
 
     test_df <- dplyr::bind_rows(test)
 
-    test_df <- test_df[,c("Lab_ID", "Analytics", select_elements(test_df))]
+    test_df <- test_df[,c("Lab_Id", "Analytics", select_elements(test_df))]
   })
 
   # Filtering Analysis Types to display and save.
@@ -397,7 +397,7 @@ function(input, output, session) {
     analytics_df <- req(final_sample_wise_analytics())
     analytics <- req(input$Analytics)
     analytics_df <- analytics_df[analytics_df$Analytics %in% analytics,]
-    analytics_df <- left_join(analytics_df, notes_summary(), by = join_by(Lab_ID))
+    analytics_df <- left_join(analytics_df, notes_summary(), by = join_by(Lab_Id))
     return(analytics_df)
   })
 
