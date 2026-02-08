@@ -20,10 +20,11 @@ function(input, output, session) {
   })
 
   observeEvent(raw_data(), {
-
+    req(raw_data())
+    raw_data <- raw_data()
     # 1. Get the list of unique Lab_IDs
-    lab_ids <- unique(raw_data()$Lab_ID)
-    methods <- unique(raw_data()$Method.Name)
+    lab_ids <- unique(raw_data$Lab_ID)
+    methods <- unique(raw_data$`Method Name`)
 
     # 2. Update the selectInput widget
     updateSelectInput(
@@ -46,12 +47,11 @@ function(input, output, session) {
   raw_data_filtred <- reactive({
     raw_data <- raw_data()
     raw_data <- raw_data[c(raw_data$Lab_ID %in% input$samples), ]
-    raw_data <- raw_data[c(raw_data$Method.Name %in% input$methods), ]
+    raw_data <- raw_data[c(raw_data$`Method Name` %in% input$methods), ]
     return(raw_data)
   })
 
   output$raw_data <- renderReactable({
-
     reactable(raw_data_filtred(), showPageSizeOptions = TRUE)
     })
   
@@ -253,7 +253,7 @@ function(input, output, session) {
   selected_list_item_analysized <- reactive({
     req(selected_list_item_read())
     x <- selected_list_item_read()
-    round(
+    t <- round(
     data.frame(t(data.frame(
       "Min"= apply(x[select_elements(x)], 2, min, na.rm=TRUE),
       "Q1" = apply(x[select_elements(x)], 2, quantile,probs = 0.25, na.rm=TRUE),
@@ -263,11 +263,14 @@ function(input, output, session) {
       "Max"= apply(x[select_elements(x)], 2, max, na.rm=TRUE),
       "StDev" = apply(x[select_elements(x)], 2, sd, na.rm=TRUE)
     ))), 3)
+    names(t) <- names(x)
+    t <- t %>% 
+      mutate(across(-1, ~ ifelse(is.finite(.x), .x, NA)))
+    return(t)
   })
 
   selected_list_item_combined <- reactive({
-    req(selected_list_item_read())
-    req(selected_list_item_analysized())
+    req(selected_list_item_read(), selected_list_item_analysized())
     dplyr::bind_rows(selected_list_item_read(),selected_list_item_analysized())
   })
   # Table Outputes

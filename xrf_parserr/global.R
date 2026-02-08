@@ -11,9 +11,12 @@ theme_set(theme_classic())
 
 read_file <- \(file_path) {
   if(grepl("\\.csv$", file_path, ignore.case = TRUE)) {
-    df <- read.csv(file = file_path)
+    df <- readr::read_csv(file = file_path)
   } else if(grepl("\\.xlsx$|\\.xls$", file_path, ignore.case = TRUE)) {
-    df <- readxl::read_excel(path = file_path)
+
+    sheet_name <- readxl::excel_sheets(file_path)
+    df <- readxl::read_excel(path = file_path, sheet = sheet_name[1])
+
   }
   
   if(!("Lab_ID" %in% names(df))) {
@@ -22,13 +25,12 @@ read_file <- \(file_path) {
   return(df)
   }
 
-
 # Function Select Elements ------------------------------------------------
 
 ## Function Slectes Colums which are 
-select_elements <- \(df){grep("Concentration", names(df), value = TRUE)}
+select_elements <- \(df){grep(".Concentration", names(df), value = TRUE)}
 ## Function Gets Element names
-get_elements <- \(df){gsub("\\.Concentration","",select_elements(df))}
+get_elements <- \(df){gsub(".Concentration","",select_elements(df))}
 
 
 # Normalization function --------------------------------------------------
@@ -41,7 +43,7 @@ normlization_fun <- \(df){
     if (row_sum == 0) {
       return(rep(0, length(row)))  # Handle rows that sum to 0
     }
-    normalized_row <- round((row / row_sum * 100), digits = 2)
+    normalized_row <- row / row_sum * 100
     return(normalized_row)
   }))
   normalized_row <- cbind(Lab_ID, normalized_row)
@@ -69,6 +71,7 @@ drop_0cols <- \(df){
 
 clean_colnames <- \(df){
   colnames(df) <- gsub(".Concentration", "", names(df))
+  df <- df %>% mutate(across(where(is.numeric), ~ round(.x, 3)))
   return(df)
 }
 
