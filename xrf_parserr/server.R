@@ -377,10 +377,12 @@ function(input, output, session) {
         "Max" = apply(x[select_elements(x)], 2, max, na.rm = TRUE),
         "StDev" = apply(x[select_elements(x)], 2, sd, na.rm = TRUE)
       )))
+      y <- !apply(list_df, 2, is.finite)
+      list_df[y] <- NA_real_
       list_df$Analytics <- rownames(list_df)
       rownames(list_df) <- NULL
       list_df$Lab_ID <- rep(Lab_ID, nrow(list_df))
-      
+
       return(list_df)
 
     })
