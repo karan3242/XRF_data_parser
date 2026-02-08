@@ -10,6 +10,7 @@ theme_set(theme_classic())
 # Function to Load Files --------------------------------------------------
 
 read_file <- \(file_path) {
+<<<<<<< HEAD
   if(grepl("\\.csv$", file_path, ignore.case = TRUE)) {
     df <- read.csv(file = file_path)
   } else if(grepl("\\.xlsx$|\\.xls$", file_path, ignore.case = TRUE)) {
@@ -25,16 +26,41 @@ read_file <- \(file_path) {
   }
 
 
+=======
+  ext <- tools::file_ext(file_path)
+  
+  df <- switch(tolower(ext),
+               "csv"  = readr::read_csv(file_path),
+               "xlsx" = readxl::read_excel(path = file_path),
+               "xls"  = readxl::read_excel(path = file_path),
+               stop("Unsupported file extension")
+  ) %>% 
+    mutate(across(contains("Concentration"), ~ as.numeric(as.character(.x))))
+  
+  if (!("Lab_ID" %in% names(df))) {
+    warning(paste("Column 'Lab_ID' not available in file:", file_path))
+  }
+  
+  return(df)
+  }
+
+>>>>>>> experimental
 # Function Select Elements ------------------------------------------------
 
 ## Function Slectes Colums which are 
-select_elements <- \(df){grep("Concentration", names(df), value = TRUE)}
+select_elements <- \(df){grep(".Concentration", names(df), value = TRUE)}
 ## Function Gets Element names
 get_elements <- \(df){gsub("\\.Concentration","",select_elements(df))}
 
 
 # Normalization function --------------------------------------------------
 
+<<<<<<< HEAD
+=======
+
+# Normalization function --------------------------------------------------
+
+>>>>>>> experimental
 normlization_fun <- \(df){
   Lab_ID <- df["Lab_ID"]
   rows <- df[, select_elements(df)]
@@ -43,7 +69,7 @@ normlization_fun <- \(df){
     if (row_sum == 0) {
       return(rep(0, length(row)))  # Handle rows that sum to 0
     }
-    normalized_row <- round((row / row_sum * 100), digits = 2)
+    normalized_row <- row / row_sum * 100
     return(normalized_row)
   }))
   normalized_row <- cbind(Lab_ID, normalized_row)
@@ -71,6 +97,7 @@ drop_0cols <- \(df){
 
 clean_colnames <- \(df){
   colnames(df) <- gsub(".Concentration", "", names(df))
+  df <- df %>% mutate(across(where(is.numeric), ~ round(.x, 3)))
   return(df)
 }
 
