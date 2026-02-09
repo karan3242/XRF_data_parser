@@ -417,9 +417,9 @@ function(input, output, session) {
       write_xlsx(
         list(
           "Raw Data" = req(raw_data_filtred()),
-          "Subset Data" = req(clean_colnames(subset_data_clean())),
-          "Cleaned Data" = req(clean_colnames(final_sample_wise_df())),
-          "Analytical Data" = req(clean_colnames(final_sample_wise_analytics_filtered()))
+          "Subset Data" = req(clean_colnames(subset_data_clean(), round = FALSE)),
+          "Cleaned Data" = req(clean_colnames(final_sample_wise_df(), round = FALSE)),
+          "Analytical Data" = req(clean_colnames(final_sample_wise_analytics_filtered(), round = FALSE))
         ),
         path = file
       )

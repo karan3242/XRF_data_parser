@@ -92,9 +92,11 @@ drop_0cols <- function(df) {
 
 # Function to clean column names ------------------------------------------
 
-clean_colnames <- \(df){
+clean_colnames <- \(df, round = TRUE){
   colnames(df) <- gsub(".Concentration", "", names(df))
-  df <- df %>% mutate(across(where(is.numeric), ~ round(.x, 3)))
+  if(round){
+    df <- df %>% mutate(across(where(is.numeric), ~ round(.x, 3)))
+  }
   return(df)
 }
 
