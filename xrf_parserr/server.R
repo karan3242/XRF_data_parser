@@ -61,7 +61,8 @@ function(input, output, session) {
       dplyr::summarise("Description" = paste(unique(Description),collapse = "; "),
                        "Notes" = paste(unique(Notes),collapse = "; ")) %>% 
       dplyr::mutate(Description = ifelse(Description %in% c("0", "NA"), NA_character_, Description), Notes = ifelse(Notes == "NA", NA_character_, Notes)) %>% 
-      ungroup()
+      ungroup() %>% 
+      select(where(~ !all(is.na(.))))
   })
 
   output$raw_data <- renderReactable({
@@ -397,6 +398,7 @@ function(input, output, session) {
     analytics_df <- req(final_sample_wise_analytics())
     analytics <- req(input$Analytics)
     analytics_df <- analytics_df[analytics_df$Analytics %in% analytics,]
+    
     analytics_df <- left_join(analytics_df, notes_summary(), by = join_by(Lab_Id))
     return(analytics_df)
   })
