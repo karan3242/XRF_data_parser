@@ -104,5 +104,6 @@ subset_fun <- \(df){
   
   df[, select_elements(df)] <- lapply(df[, select_elements(df)], as.numeric)
   output <- df[,c("Lab_Id", select_elements(df))]
+  output[output == 0] <- NA_real_
   return(output)
 }
