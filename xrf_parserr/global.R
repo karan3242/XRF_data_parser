@@ -5,7 +5,7 @@ pkgs <- c("shiny", "readr", "tidyverse",
           "CC","shinythemes", "bslib", "readxl",
           "reactable")
 pkginst <- lapply(pkgs, library, character.only = TRUE)
-theme_set(theme_classic())
+
 
 # Function to Load Files --------------------------------------------------
 #function to capitalize Names
