@@ -3,9 +3,9 @@
 pkgs <- c("shiny", "readr", "tidyverse",
           "plotly", "writexl",
           "CC","shinythemes", "bslib", "readxl",
-          "reactable")
+          "reactable", "Rcpp")
 pkginst <- lapply(pkgs, library, character.only = TRUE)
-
+sourceCpp("norm_function.cpp")
 
 # Function to Load Files --------------------------------------------------
 #function to capitalize Names
@@ -48,18 +48,8 @@ get_elements <- \(df){gsub(".Concentration","",select_elements(df))}
 # Normalization function --------------------------------------------------
 
 normlization_fun <- \(df){
-  Lab_Id <- df["Lab_Id"]
-  rows <- df[, select_elements(df)]
-  normalized_row <- t(apply(rows, 1, \(row) {
-    row_sum <- sum(row, na.rm = TRUE)
-    if (row_sum == 0) {
-      return(rep(0, length(row)))  # Handle rows that sum to 0
-    }
-    normalized_row <- row / row_sum * 100
-    return(normalized_row)
-  }))
-  normalized_row <- cbind(Lab_Id, normalized_row)
-  return(normalized_row)
+  col_names <- names(df)[-1]
+  return(normalization_cpp_std(df, col_names))
 }
 
 
