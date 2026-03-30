@@ -1,4 +1,5 @@
 ##### Main Function #####
+
 function(input, output, session) {
 
 
@@ -359,7 +360,8 @@ function(input, output, session) {
   # Collaps List into dataframe.
   final_sample_wise_df <- reactive({
     list <- req(final_sample_wise_list())
-    final_df <- as.data.frame(dplyr::bind_rows(list))
+    final_df <- as.data.frame(dplyr::bind_rows(list)) %>% 
+      dplyr::select(-Reading)
     return(final_df)
   })
   # From final_sample_List Create a list of analtics.

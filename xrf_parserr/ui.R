@@ -77,7 +77,7 @@ fluidPage(
                         reactableOutput("final_sample_wise_analytics"))
               ),
     # ---- About Page ----
-    nav_panel("Help",
-              includeMarkdown("../README.md"))
+     nav_panel("Help",
+               includeMarkdown("../README.md"))
   )
 )
