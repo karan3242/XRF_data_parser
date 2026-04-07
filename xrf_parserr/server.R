@@ -269,13 +269,10 @@ function(input, output, session) {
     req(selected_list_item_read())
     x <- selected_list_item_read()
     t <- data.frame(t(data.frame(
-      "Min"= apply(x[select_elements(x)], 2, min, na.rm=TRUE),
-      "Q1" = apply(x[select_elements(x)], 2, quantile,probs = 0.25, na.rm=TRUE),
       "Median" = apply(x[select_elements(x)], 2, median, na.rm=TRUE),
       "Mean"= apply(x[select_elements(x)], 2, mean, na.rm=TRUE),
-      "Q3" = apply(x[select_elements(x)], 2, quantile,probs = 0.75, na.rm=TRUE),
-      "Max"= apply(x[select_elements(x)], 2, max, na.rm=TRUE),
-      "StDev" = apply(x[select_elements(x)], 2, sd, na.rm=TRUE)
+      "StDev" = apply(x[select_elements(x)], 2, sd, na.rm=TRUE),
+      "Sterr" = apply(x[select_elements(x)], 2, \(col){sd(col, na.rm=TRUE)/sqrt(sum(!is.na(col)))})
     )))
     names(t) <- names(x)
     y <- !apply(t, 2, is.finite)
