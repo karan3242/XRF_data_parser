@@ -277,17 +277,15 @@ function(input, output, session) {
     names(t) <- names(x)
     y <- !apply(t, 2, is.finite)
     t[y] <- NA_real_
-    return(t)
+    df <- dplyr::bind_rows(selected_list_item_read(),t)
+    rownames(df) <- c(seq(nrow(x)), "Median", "Mean", "StDev", "Sterr")
+    # df <- df %>% dplyr::select(Analytics, everything()) 
+    return(df)
   })
 
-  selected_list_item_combined <- reactive({
-    req(selected_list_item_read(), selected_list_item_analysized())
-    dplyr::bind_rows(selected_list_item_read(),selected_list_item_analysized())
-  })
   # Table Outputes
   output$sample_wise_list_analysied <-  renderReactable({
-    # reactable(clean_colnames(selected_list_item_analysized()))
-    reactable(clean_colnames(selected_list_item_combined()))
+    reactable(clean_colnames(selected_list_item_analysized()))
   })
 
 
@@ -357,8 +355,8 @@ function(input, output, session) {
   # Collaps List into dataframe.
   final_sample_wise_df <- reactive({
     list <- req(final_sample_wise_list())
-    final_df <- as.data.frame(dplyr::bind_rows(list)) %>% 
-      dplyr::select(-Reading)
+    final_df <- as.data.frame(dplyr::bind_rows(list))
+    # final_df <- final_df %>% dplyr::select(-Reading)
     return(final_df)
   })
   # From final_sample_List Create a list of analtics.
@@ -374,7 +372,8 @@ function(input, output, session) {
         "Mean" = apply(x[select_elements(x)], 2, mean, na.rm = TRUE),
         "Q3" = apply(x[select_elements(x)], 2, quantile,probs = 0.75, na.rm = TRUE),
         "Max" = apply(x[select_elements(x)], 2, max, na.rm = TRUE),
-        "StDev" = apply(x[select_elements(x)], 2, sd, na.rm = TRUE)
+        "StDev" = apply(x[select_elements(x)], 2, sd, na.rm = TRUE),
+        "Sterr" = apply(x[select_elements(x)], 2, \(col){sd(col, na.rm=TRUE)/sqrt(sum(!is.na(col)))})
       )))
       y <- !apply(list_df, 2, is.finite)
       list_df[y] <- NA_real_
